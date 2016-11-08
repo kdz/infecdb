@@ -652,6 +652,7 @@ mePage model =
 
 medicMePageCmd : Int -> Cmd Msg
 medicMePageCmd mid =
+    {- Get a single medic's row from medic -}
     let
         body =
             [ ( "mid", Encode.int mid ), ( "columns", encodeCols medicTable.columns ) ]

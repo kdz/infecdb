@@ -184,6 +184,7 @@ def validate_mid(mid):
 
 @app.route('/medic-me-page', methods=['GET', 'POST'])
 def query_medic_me_page():
+    """ Returns a single medic row using specified mid. """
 
     log("starting query_medic_me_page", "")
 
@@ -194,11 +195,11 @@ def query_medic_me_page():
 
 
     mid_cursor = g.conn.execute(query_str)
-    info = [row_to_dict(row, cols) for row in mid_cursor][0]
+    medic = [row_to_dict(row, cols) for row in mid_cursor][0]
 
     log("completed medic_me_page", "")
 
-    return jsonify(info)
+    return jsonify(medic)
 
 
 # @app.route('/?', methods=['GET', 'POST'])
