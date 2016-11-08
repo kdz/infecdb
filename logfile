@@ -1,0 +1,327 @@
+LOG:  database system was shut down at 2016-11-05 21:47:09 CDT
+LOG:  MultiXact member wraparound protections are now enabled
+LOG:  database system is ready to accept connections
+LOG:  autovacuum launcher started
+FATAL:  database "infecdb" does not exist
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER SCHEMA kmg2183 OWNER TO kmg2183;
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE admitted_to OWNER TO kmg2183;
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE checks_on OWNER TO kmg2183;
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE contacted OWNER TO kmg2183;
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE disease OWNER TO kmg2183;
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE exhibits OWNER TO kmg2183;
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE has OWNER TO kmg2183;
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE hospital OWNER TO kmg2183;
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE location OWNER TO kmg2183;
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE medic OWNER TO kmg2183;
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE patient OWNER TO kmg2183;
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE produces OWNER TO kmg2183;
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE symptom OWNER TO kmg2183;
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE treatment_for OWNER TO kmg2183;
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  REVOKE ALL ON SCHEMA kmg2183 FROM kmg2183;
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  GRANT ALL ON SCHEMA kmg2183 TO kmg2183;
+ERROR:  schema "kmg2183" already exists
+STATEMENT:  CREATE SCHEMA kmg2183;
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER SCHEMA kmg2183 OWNER TO kmg2183;
+ERROR:  relation "admitted_to" already exists
+STATEMENT:  CREATE TABLE admitted_to (
+	    pid integer NOT NULL,
+	    hospital_name character varying(60) NOT NULL,
+	    admitted_on date
+	);
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE admitted_to OWNER TO kmg2183;
+ERROR:  relation "checks_on" already exists
+STATEMENT:  CREATE TABLE checks_on (
+	    pid bigint NOT NULL,
+	    mid bigint NOT NULL,
+	    checked_on timestamp without time zone
+	);
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE checks_on OWNER TO kmg2183;
+ERROR:  relation "contacted" already exists
+STATEMENT:  CREATE TABLE contacted (
+	    infected_pid bigint NOT NULL,
+	    exposed_pid bigint NOT NULL,
+	    contact_date timestamp without time zone,
+	    CONSTRAINT contacted_check CHECK ((exposed_pid <> infected_pid))
+	);
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE contacted OWNER TO kmg2183;
+ERROR:  relation "disease" already exists
+STATEMENT:  CREATE TABLE disease (
+	    virus_name text NOT NULL,
+	    incubation bigint,
+	    duration bigint
+	);
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE disease OWNER TO kmg2183;
+ERROR:  relation "exhibits" already exists
+STATEMENT:  CREATE TABLE exhibits (
+	    pid integer NOT NULL,
+	    symptom_name character varying(20) NOT NULL,
+	    since date
+	);
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE exhibits OWNER TO kmg2183;
+ERROR:  relation "has" already exists
+STATEMENT:  CREATE TABLE has (
+	    pid integer NOT NULL,
+	    virus_name character varying(20) NOT NULL,
+	    since date
+	);
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE has OWNER TO kmg2183;
+ERROR:  relation "hospital" already exists
+STATEMENT:  CREATE TABLE hospital (
+	    hospital_name text NOT NULL,
+	    number_of_beds bigint,
+	    latitude character varying(20),
+	    longitude character varying(20)
+	);
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE hospital OWNER TO kmg2183;
+ERROR:  relation "location" already exists
+STATEMENT:  CREATE TABLE location (
+	    latitude text,
+	    longitude text,
+	    state text,
+	    country text,
+	    postal_code text
+	);
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE location OWNER TO kmg2183;
+ERROR:  relation "medic" already exists
+STATEMENT:  CREATE TABLE medic (
+	    mid bigint NOT NULL,
+	    name text,
+	    phone_number text,
+	    latitude character varying(20),
+	    longitude character varying(20),
+	    hospital_name text
+	);
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE medic OWNER TO kmg2183;
+ERROR:  relation "patient" already exists
+STATEMENT:  CREATE TABLE patient (
+	    pid bigint NOT NULL,
+	    forename text,
+	    surname text,
+	    status text,
+	    phone_number text,
+	    dob text,
+	    latitude character varying(20),
+	    longitude character varying(20)
+	);
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE patient OWNER TO kmg2183;
+ERROR:  relation "produces" already exists
+STATEMENT:  CREATE TABLE produces (
+	    virus_name character varying(20) NOT NULL,
+	    symptom_name character varying(35) NOT NULL
+	);
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE produces OWNER TO kmg2183;
+ERROR:  relation "symptom" already exists
+STATEMENT:  CREATE TABLE symptom (
+	    symptom_name text NOT NULL,
+	    description text
+	);
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE symptom OWNER TO kmg2183;
+ERROR:  relation "treatment_for" already exists
+STATEMENT:  CREATE TABLE treatment_for (
+	    hospital_name character varying(60) NOT NULL,
+	    virus_name character varying(20) NOT NULL
+	);
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  ALTER TABLE treatment_for OWNER TO kmg2183;
+ERROR:  duplicate key value violates unique constraint "admitted_to_pkey"
+DETAIL:  Key (pid, hospital_name)=(1600019, Lenox Hill Hospital) already exists.
+CONTEXT:  COPY admitted_to, line 1
+STATEMENT:  COPY admitted_to (pid, hospital_name, admitted_on) FROM stdin;
+ERROR:  duplicate key value violates unique constraint "checks_on_pkey"
+DETAIL:  Key (pid, mid)=(1600000, 9004) already exists.
+CONTEXT:  COPY checks_on, line 1
+STATEMENT:  COPY checks_on (pid, mid, checked_on) FROM stdin;
+ERROR:  duplicate key value violates unique constraint "contacted_pkey"
+DETAIL:  Key (infected_pid, exposed_pid)=(1600033, 1600000) already exists.
+CONTEXT:  COPY contacted, line 1
+STATEMENT:  COPY contacted (infected_pid, exposed_pid, contact_date) FROM stdin;
+ERROR:  duplicate key value violates unique constraint "disease_pkey"
+DETAIL:  Key (virus_name)=(Influenza A, B) already exists.
+CONTEXT:  COPY disease, line 1
+STATEMENT:  COPY disease (virus_name, incubation, duration) FROM stdin;
+ERROR:  duplicate key value violates unique constraint "exhibits_pkey"
+DETAIL:  Key (pid, symptom_name)=(1600020, Muscle Pain) already exists.
+CONTEXT:  COPY exhibits, line 1
+STATEMENT:  COPY exhibits (pid, symptom_name, since) FROM stdin;
+ERROR:  duplicate key value violates unique constraint "has_pkey"
+DETAIL:  Key (pid, virus_name)=(1600019, Ebola) already exists.
+CONTEXT:  COPY has, line 1
+STATEMENT:  COPY has (pid, virus_name, since) FROM stdin;
+ERROR:  duplicate key value violates unique constraint "hospital_pkey"
+DETAIL:  Key (hospital_name)=(ArchCare at Terence Cardinal Cooke Health Care Center) already exists.
+CONTEXT:  COPY hospital, line 1
+STATEMENT:  COPY hospital (hospital_name, number_of_beds, latitude, longitude) FROM stdin;
+ERROR:  duplicate key value violates unique constraint "medic_pkey"
+DETAIL:  Key (mid)=(9000) already exists.
+CONTEXT:  COPY medic, line 1
+STATEMENT:  COPY medic (mid, name, phone_number, latitude, longitude, hospital_name) FROM stdin;
+ERROR:  duplicate key value violates unique constraint "patient_pkey"
+DETAIL:  Key (pid)=(1600000) already exists.
+CONTEXT:  COPY patient, line 1
+STATEMENT:  COPY patient (pid, forename, surname, status, phone_number, dob, latitude, longitude) FROM stdin;
+ERROR:  duplicate key value violates unique constraint "produces_pkey"
+DETAIL:  Key (virus_name, symptom_name)=(Influenza A, B, Fever) already exists.
+CONTEXT:  COPY produces, line 1
+STATEMENT:  COPY produces (virus_name, symptom_name) FROM stdin;
+ERROR:  duplicate key value violates unique constraint "symptom_pkey"
+DETAIL:  Key (symptom_name)=(Fever) already exists.
+CONTEXT:  COPY symptom, line 1
+STATEMENT:  COPY symptom (symptom_name, description) FROM stdin;
+ERROR:  duplicate key value violates unique constraint "treatment_for_pkey"
+DETAIL:  Key (hospital_name, virus_name)=(ArchCare at Terence Cardinal Cooke Health Care Center, Influenza A, B) already exists.
+CONTEXT:  COPY treatment_for, line 1
+STATEMENT:  COPY treatment_for (hospital_name, virus_name) FROM stdin;
+ERROR:  multiple primary keys for table "admitted_to" are not allowed
+STATEMENT:  ALTER TABLE ONLY admitted_to
+	    ADD CONSTRAINT admitted_to_pkey PRIMARY KEY (pid, hospital_name);
+ERROR:  multiple primary keys for table "checks_on" are not allowed
+STATEMENT:  ALTER TABLE ONLY checks_on
+	    ADD CONSTRAINT checks_on_pkey PRIMARY KEY (pid, mid);
+ERROR:  multiple primary keys for table "contacted" are not allowed
+STATEMENT:  ALTER TABLE ONLY contacted
+	    ADD CONSTRAINT contacted_pkey PRIMARY KEY (infected_pid, exposed_pid);
+ERROR:  multiple primary keys for table "disease" are not allowed
+STATEMENT:  ALTER TABLE ONLY disease
+	    ADD CONSTRAINT disease_pkey PRIMARY KEY (virus_name);
+ERROR:  multiple primary keys for table "exhibits" are not allowed
+STATEMENT:  ALTER TABLE ONLY exhibits
+	    ADD CONSTRAINT exhibits_pkey PRIMARY KEY (pid, symptom_name);
+ERROR:  multiple primary keys for table "has" are not allowed
+STATEMENT:  ALTER TABLE ONLY has
+	    ADD CONSTRAINT has_pkey PRIMARY KEY (pid, virus_name);
+ERROR:  multiple primary keys for table "hospital" are not allowed
+STATEMENT:  ALTER TABLE ONLY hospital
+	    ADD CONSTRAINT hospital_pkey PRIMARY KEY (hospital_name);
+ERROR:  multiple primary keys for table "medic" are not allowed
+STATEMENT:  ALTER TABLE ONLY medic
+	    ADD CONSTRAINT medic_pkey PRIMARY KEY (mid);
+ERROR:  multiple primary keys for table "patient" are not allowed
+STATEMENT:  ALTER TABLE ONLY patient
+	    ADD CONSTRAINT patient_pkey PRIMARY KEY (pid);
+ERROR:  multiple primary keys for table "produces" are not allowed
+STATEMENT:  ALTER TABLE ONLY produces
+	    ADD CONSTRAINT produces_pkey PRIMARY KEY (virus_name, symptom_name);
+ERROR:  multiple primary keys for table "symptom" are not allowed
+STATEMENT:  ALTER TABLE ONLY symptom
+	    ADD CONSTRAINT symptom_pkey PRIMARY KEY (symptom_name);
+ERROR:  multiple primary keys for table "treatment_for" are not allowed
+STATEMENT:  ALTER TABLE ONLY treatment_for
+	    ADD CONSTRAINT treatment_for_pkey PRIMARY KEY (hospital_name, virus_name);
+ERROR:  constraint "admitted_to_hospital_name_fkey" for relation "admitted_to" already exists
+STATEMENT:  ALTER TABLE ONLY admitted_to
+	    ADD CONSTRAINT admitted_to_hospital_name_fkey FOREIGN KEY (hospital_name) REFERENCES hospital(hospital_name) ON UPDATE CASCADE;
+ERROR:  constraint "admitted_to_pid_fkey" for relation "admitted_to" already exists
+STATEMENT:  ALTER TABLE ONLY admitted_to
+	    ADD CONSTRAINT admitted_to_pid_fkey FOREIGN KEY (pid) REFERENCES patient(pid) ON UPDATE CASCADE ON DELETE CASCADE;
+ERROR:  constraint "checks_on_mid_fkey" for relation "checks_on" already exists
+STATEMENT:  ALTER TABLE ONLY checks_on
+	    ADD CONSTRAINT checks_on_mid_fkey FOREIGN KEY (mid) REFERENCES medic(mid) ON UPDATE CASCADE;
+ERROR:  constraint "checks_on_pid_fkey" for relation "checks_on" already exists
+STATEMENT:  ALTER TABLE ONLY checks_on
+	    ADD CONSTRAINT checks_on_pid_fkey FOREIGN KEY (pid) REFERENCES patient(pid) ON UPDATE CASCADE ON DELETE CASCADE;
+ERROR:  constraint "contacted_exposed_pid_fkey" for relation "contacted" already exists
+STATEMENT:  ALTER TABLE ONLY contacted
+	    ADD CONSTRAINT contacted_exposed_pid_fkey FOREIGN KEY (exposed_pid) REFERENCES patient(pid) ON UPDATE CASCADE ON DELETE CASCADE;
+ERROR:  constraint "contacted_infected_pid_fkey" for relation "contacted" already exists
+STATEMENT:  ALTER TABLE ONLY contacted
+	    ADD CONSTRAINT contacted_infected_pid_fkey FOREIGN KEY (infected_pid) REFERENCES patient(pid) ON UPDATE CASCADE;
+ERROR:  constraint "exhibits_pid_fkey" for relation "exhibits" already exists
+STATEMENT:  ALTER TABLE ONLY exhibits
+	    ADD CONSTRAINT exhibits_pid_fkey FOREIGN KEY (pid) REFERENCES patient(pid) ON UPDATE CASCADE ON DELETE CASCADE;
+ERROR:  constraint "exhibits_symptom_name_fkey" for relation "exhibits" already exists
+STATEMENT:  ALTER TABLE ONLY exhibits
+	    ADD CONSTRAINT exhibits_symptom_name_fkey FOREIGN KEY (symptom_name) REFERENCES symptom(symptom_name) ON UPDATE CASCADE;
+ERROR:  constraint "has_pid_fkey" for relation "has" already exists
+STATEMENT:  ALTER TABLE ONLY has
+	    ADD CONSTRAINT has_pid_fkey FOREIGN KEY (pid) REFERENCES patient(pid) ON UPDATE CASCADE;
+ERROR:  constraint "has_virus_name_fkey" for relation "has" already exists
+STATEMENT:  ALTER TABLE ONLY has
+	    ADD CONSTRAINT has_virus_name_fkey FOREIGN KEY (virus_name) REFERENCES disease(virus_name) ON UPDATE CASCADE;
+ERROR:  constraint "produces_symptom_name_fkey" for relation "produces" already exists
+STATEMENT:  ALTER TABLE ONLY produces
+	    ADD CONSTRAINT produces_symptom_name_fkey FOREIGN KEY (symptom_name) REFERENCES symptom(symptom_name) ON UPDATE CASCADE;
+ERROR:  constraint "produces_virus_name_fkey" for relation "produces" already exists
+STATEMENT:  ALTER TABLE ONLY produces
+	    ADD CONSTRAINT produces_virus_name_fkey FOREIGN KEY (virus_name) REFERENCES disease(virus_name) ON UPDATE CASCADE;
+ERROR:  constraint "treatment_for_hospital_name_fkey" for relation "treatment_for" already exists
+STATEMENT:  ALTER TABLE ONLY treatment_for
+	    ADD CONSTRAINT treatment_for_hospital_name_fkey FOREIGN KEY (hospital_name) REFERENCES hospital(hospital_name) ON UPDATE CASCADE ON DELETE CASCADE;
+ERROR:  constraint "treatment_for_virus_name_fkey" for relation "treatment_for" already exists
+STATEMENT:  ALTER TABLE ONLY treatment_for
+	    ADD CONSTRAINT treatment_for_virus_name_fkey FOREIGN KEY (virus_name) REFERENCES disease(virus_name) ON UPDATE CASCADE ON DELETE CASCADE;
+ERROR:  constraint "works_at" for relation "medic" already exists
+STATEMENT:  ALTER TABLE ONLY medic
+	    ADD CONSTRAINT works_at FOREIGN KEY (hospital_name) REFERENCES hospital(hospital_name) ON UPDATE CASCADE;
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  REVOKE ALL ON SCHEMA kmg2183 FROM kmg2183;
+ERROR:  role "kmg2183" does not exist
+STATEMENT:  GRANT ALL ON SCHEMA kmg2183 TO kmg2183;
+FATAL:  role "kmg2183" does not exist
+LOG:  received fast shutdown request
+LOG:  aborting any active transactions
+LOG:  autovacuum launcher shutting down
+LOG:  shutting down
+LOG:  database system is shut down
+LOG:  database system was shut down at 2016-11-05 22:13:32 CDT
+LOG:  MultiXact member wraparound protections are now enabled
+LOG:  database system is ready to accept connections
+LOG:  autovacuum launcher started
+LOG:  received fast shutdown request
+LOG:  aborting any active transactions
+LOG:  autovacuum launcher shutting down
+LOG:  shutting down
+LOG:  database system is shut down
+LOG:  database system was shut down at 2016-11-05 22:15:45 CDT
+LOG:  MultiXact member wraparound protections are now enabled
+LOG:  database system is ready to accept connections
+LOG:  autovacuum launcher started
+FATAL:  database "status" does not exist
+FATAL:  role "status" does not exist
+FATAL:  role "status" does not exist
+FATAL:  database "postgres" does not exist
+FATAL:  role "status" does not exist
+FATAL:  database "postgres" does not exist
+FATAL:  role "postgres" does not exist
+FATAL:  database "Kelsey" does not exist
+FATAL:  role "postgres" does not exist
+FATAL:  database "postgres" does not exist
+FATAL:  role "postgres" does not exist
+FATAL:  database "postgres" does not exist
+FATAL:  database "infecdb" does not exist
+FATAL:  lock file "postmaster.pid" already exists
+HINT:  Is another postmaster (PID 25767) running in data directory "/Users/Kelsey/Google_Drive/Documents/Semester_5/Databases/app-db/infecdb"?
+FATAL:  database "infecdb" does not exist
+FATAL:  database "postgres" does not exist
+LOG:  autovacuum launcher shutting down
+LOG:  received smart shutdown request
+LOG:  shutting down
+LOG:  database system is shut down

@@ -1,0 +1,68 @@
+var _user$project$Menu$update = function (_p0) {
+	var _p1 = _p0;
+	return _p1._0;
+};
+var _user$project$Menu$Select = function (a) {
+	return {ctor: 'Select', _0: a};
+};
+var _user$project$Menu$view = F2(
+	function (choices, sel) {
+		var itemClass = F2(
+			function (val, selVal) {
+				return (!_elm_lang$core$Native_Utils.eq(val, selVal)) ? 'pure-menu-item' : 'pure-menu-item pure-menu-selected';
+			});
+		return A2(
+			_elm_lang$html$Html$div,
+			_elm_lang$core$Native_List.fromArray(
+				[
+					_elm_lang$html$Html_Attributes$id('menu')
+				]),
+			_elm_lang$core$Native_List.fromArray(
+				[
+					A2(
+					_elm_lang$html$Html$div,
+					_elm_lang$core$Native_List.fromArray(
+						[
+							_elm_lang$html$Html_Attributes$class('pure-menu')
+						]),
+					_elm_lang$core$Native_List.fromArray(
+						[
+							A2(
+							_elm_lang$html$Html$span,
+							_elm_lang$core$Native_List.fromArray(
+								[
+									_elm_lang$html$Html_Attributes$class('pure-menu-heading')
+								]),
+							_elm_lang$core$Native_List.fromArray(
+								[
+									_elm_lang$html$Html$text('Choose')
+								])),
+							A2(
+							_elm_lang$html$Html$ul,
+							_elm_lang$core$Native_List.fromArray(
+								[
+									_elm_lang$html$Html_Attributes$class('pure-menu-list')
+								]),
+							A2(
+								_elm_lang$core$List$map,
+								function (_p2) {
+									var _p3 = _p2;
+									var _p4 = _p3._1;
+									return A2(
+										_elm_lang$html$Html$li,
+										_elm_lang$core$Native_List.fromArray(
+											[
+												_elm_lang$html$Html_Attributes$class(
+												A2(itemClass, _p4, sel)),
+												_elm_lang$html$Html_Events$onClick(
+												_user$project$Menu$Select(_p4))
+											]),
+										_elm_lang$core$Native_List.fromArray(
+											[
+												_elm_lang$html$Html$text(_p3._0)
+											]));
+								},
+								choices))
+						]))
+				]));
+	});

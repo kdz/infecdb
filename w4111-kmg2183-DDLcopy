@@ -1,0 +1,108 @@
+CREATE TABLE admitted_to
+(
+    pid INTEGER NOT NULL,
+    hospital_name VARCHAR(60) NOT NULL,
+    admitted_on DATE,
+    CONSTRAINT admitted_to_pkey PRIMARY KEY (pid, hospital_name)
+);
+CREATE TABLE checks_on
+(
+    pid BIGINT NOT NULL,
+    mid BIGINT NOT NULL,
+    checked_on TIMESTAMP,
+    CONSTRAINT checks_on_pkey PRIMARY KEY (pid, mid)
+);
+CREATE TABLE contacted
+(
+    infected_pid BIGINT NOT NULL,
+    exposed_pid BIGINT NOT NULL,
+    contact_date TIMESTAMP,
+    CONSTRAINT contacted_pkey PRIMARY KEY (infected_pid, exposed_pid)
+);
+CREATE TABLE disease
+(
+    virus_name TEXT PRIMARY KEY NOT NULL,
+    incubation BIGINT,
+    duration BIGINT
+);
+CREATE TABLE exhibits
+(
+    pid INTEGER NOT NULL,
+    symptom_name VARCHAR(20) NOT NULL,
+    since DATE,
+    CONSTRAINT exhibits_pkey PRIMARY KEY (pid, symptom_name)
+);
+CREATE TABLE has
+(
+    pid INTEGER NOT NULL,
+    virus_name VARCHAR(20) NOT NULL,
+    since DATE,
+    CONSTRAINT has_pkey PRIMARY KEY (pid, virus_name)
+);
+CREATE TABLE hospital
+(
+    hospital_name TEXT PRIMARY KEY NOT NULL,
+    number_of_beds BIGINT,
+    latitude VARCHAR(20),
+    longitude VARCHAR(20)
+);
+CREATE TABLE location
+(
+    latitude TEXT,
+    longitude TEXT,
+    state TEXT,
+    country TEXT,
+    postal_code TEXT
+);
+CREATE TABLE medic
+(
+    mid BIGINT PRIMARY KEY NOT NULL,
+    name TEXT,
+    phone_number TEXT,
+    latitude VARCHAR(20),
+    longitude VARCHAR(20),
+    hospital_name TEXT
+);
+CREATE TABLE patient
+(
+    pid BIGINT PRIMARY KEY NOT NULL,
+    forename TEXT,
+    surname TEXT,
+    status TEXT,
+    phone_number TEXT,
+    dob TEXT,
+    latitude VARCHAR(20),
+    longitude VARCHAR(20)
+);
+CREATE TABLE produces
+(
+    virus_name VARCHAR(20) NOT NULL,
+    symptom_name VARCHAR(35) NOT NULL,
+    CONSTRAINT produces_pkey PRIMARY KEY (virus_name, symptom_name)
+);
+CREATE TABLE symptom
+(
+    symptom_name TEXT PRIMARY KEY NOT NULL,
+    description TEXT
+);
+CREATE TABLE treatment_for
+(
+    hospital_name VARCHAR(60) NOT NULL,
+    virus_name VARCHAR(20) NOT NULL,
+    CONSTRAINT treatment_for_pkey PRIMARY KEY (hospital_name, virus_name)
+);
+ALTER TABLE admitted_to ADD FOREIGN KEY (pid) REFERENCES patient (pid);
+ALTER TABLE admitted_to ADD FOREIGN KEY (hospital_name) REFERENCES hospital (hospital_name);
+ALTER TABLE checks_on ADD FOREIGN KEY (pid) REFERENCES patient (pid);
+ALTER TABLE checks_on ADD FOREIGN KEY (mid) REFERENCES medic (mid);
+ALTER TABLE contacted ADD FOREIGN KEY (infected_pid) REFERENCES patient (pid);
+ALTER TABLE contacted ADD FOREIGN KEY (exposed_pid) REFERENCES patient (pid);
+ALTER TABLE exhibits ADD FOREIGN KEY (pid) REFERENCES patient (pid);
+ALTER TABLE exhibits ADD FOREIGN KEY (symptom_name) REFERENCES symptom (symptom_name);
+ALTER TABLE has ADD FOREIGN KEY (pid) REFERENCES patient (pid);
+ALTER TABLE has ADD FOREIGN KEY (virus_name) REFERENCES disease (virus_name);
+ALTER TABLE medic ADD FOREIGN KEY (hospital_name) REFERENCES hospital (hospital_name);
+ALTER TABLE produces ADD FOREIGN KEY (virus_name) REFERENCES disease (virus_name);
+ALTER TABLE produces ADD FOREIGN KEY (symptom_name) REFERENCES symptom (symptom_name);
+ALTER TABLE treatment_for ADD FOREIGN KEY (hospital_name) REFERENCES hospital (hospital_name);
+ALTER TABLE treatment_for ADD FOREIGN KEY (virus_name) REFERENCES disease (virus_name);

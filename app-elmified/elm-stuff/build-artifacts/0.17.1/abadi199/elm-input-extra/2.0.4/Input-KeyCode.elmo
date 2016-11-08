@@ -1,0 +1,2 @@
+var _abadi199$elm_input_extra$Input_KeyCode$allowedKeyCodes = _elm_lang$core$Native_List.fromArray(
+	[37, 39, 8, 17, 18, 46, 9, 13]);

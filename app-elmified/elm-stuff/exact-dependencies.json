@@ -1,0 +1,9 @@
+{
+    "elm-lang/virtual-dom": "1.1.1",
+    "evancz/elm-http": "3.0.1",
+    "elm-lang/html": "1.1.0",
+    "lukewestby/elm-http-builder": "3.0.0",
+    "NoRedInk/elm-decode-pipeline": "2.0.0",
+    "abadi199/elm-input-extra": "2.0.4",
+    "elm-lang/core": "4.0.5"
+}
