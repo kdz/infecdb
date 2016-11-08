@@ -41,6 +41,7 @@ type alias Model =
     , patients : List Patient
     , diseases : List Disease
     , symptoms : List Symptom
+    , mePage : MePage
     , mode : Mode
     , loginStatus : Status
     , loginNumberModel : Number.Model
@@ -55,6 +56,7 @@ initModel =
     , patients = []
     , diseases = []
     , symptoms = []
+    , mePage = NoMePage
     , mode = HospitalPage
     , loginStatus = Public
     , loginNumberModel = (Number.init)
@@ -81,8 +83,7 @@ type Mode
     | DiseasePage
       -- (TODO) contact tracing
     | PatientPage
-      -- (TODO)
-    | MePage
+    | MyInfoPage
 
 
 type Status
@@ -108,7 +109,7 @@ menu =
     [ ( "Hospitals", HospitalPage )
     , ( "Diseases", DiseasePage )
     , ( "Patients", PatientPage )
-    , ( "Me", MePage )
+    , ( "Me", MyInfoPage )
     ]
 
 
@@ -171,6 +172,20 @@ symptomTable =
     }
 
 
+medicTable : Table Medic
+medicTable =
+    { name = "medic"
+    , columns =
+        [ ( "mid", .mid )
+        , ( "name", .name )
+        , ( "hospital_name", .hospitalName )
+        , ( "phone_number", .phoneNumber )
+        , ( "latitude", .latitude )
+        , ( "longitude", .longitude )
+        ]
+    }
+
+
 
 -- MAIN PROBLEM-DOMAIN OBJECT TYPES
 
@@ -208,6 +223,22 @@ type alias Symptom =
     }
 
 
+type alias Medic =
+    { mid : String
+    , name : String
+    , phoneNumber : String
+    , hospitalName : String
+    , latitude : String
+    , longitude : String
+    }
+
+
+type MePage
+    = MePageMedic Medic
+    | MePagePatient
+    | NoMePage
+
+
 type Msg
     = HospitalTableSucceed (List Hospital)
     | RequestFail Http.Error
@@ -220,6 +251,7 @@ type Msg
     | PatientTableSucceed (List Patient)
     | DiseaseTableSucceed (List Disease)
     | SymptomByDiseaseSucceed (List Symptom)
+    | MedicMePageSucceed Medic
     | UpdateFieldInput String String
     | FieldSearch
     | NoJoin String Int
@@ -259,6 +291,9 @@ update msg model =
                 SymptomByDiseaseSucceed incomingSymptoms ->
                     ( { model | symptoms = incomingSymptoms }, Cmd.none )
 
+                MedicMePageSucceed medicInfo ->
+                    ( { model | mePage = MePageMedic medicInfo }, Cmd.none )
+
                 RequestFail err ->
                     ( model, Cmd.none )
 
@@ -277,8 +312,16 @@ update msg model =
                             DiseasePage ->
                                 ( { model | mode = newMode }, diseaseLoadCmd )
 
-                            _ ->
-                                ( { model | mode = newMode }, Cmd.none )
+                            MyInfoPage ->
+                                case model.loginStatus of
+                                    Public ->
+                                        ( { model | mode = newMode }, Cmd.none )
+
+                                    PatientLoggedIn pid ->
+                                        ( { model | mode = newMode }, Cmd.none )
+
+                                    MedicLoggedIn mid ->
+                                        ( { model | mode = newMode }, medicMePageCmd mid )
 
                 UpdateLogin numberMsg ->
                     ( { model
@@ -591,6 +634,41 @@ diseaseByHospitalCmd hospName =
 
 
 
+-- Me page load
+
+
+mePage : Model -> Cmd Msg
+mePage model =
+    case model.loginStatus of
+        Public ->
+            Cmd.none
+
+        PatientLoggedIn pid ->
+            patientMePageCmd pid
+
+        MedicLoggedIn mid ->
+            medicMePageCmd mid
+
+
+medicMePageCmd : Int -> Cmd Msg
+medicMePageCmd mid =
+    let
+        body =
+            [ ( "mid", Encode.int mid ), ( "columns", encodeCols medicTable.columns ) ]
+                |> Encode.object
+                |> Encode.encode 1
+                |> Http.string
+    in
+        (post' medicMePageDecoder (baseUrl ++ "/medic-me-page") body)
+            |> Task.perform RequestFail MedicMePageSucceed
+
+
+patientMePageCmd : Int -> Cmd Msg
+patientMePageCmd mid =
+    Cmd.none
+
+
+
 -- DECODERS
 
 
@@ -631,6 +709,17 @@ symptomDecoder =
         |> required "description" string
 
 
+medicMePageDecoder : Decode.Decoder Medic
+medicMePageDecoder =
+    decode Medic
+        |> required "mid" string
+        |> required "name" string
+        |> required "phone_number" string
+        |> required "hospital_name" string
+        |> required "latitude" string
+        |> required "longitude" string
+
+
 
 -- VIEW
 {-
@@ -654,8 +743,6 @@ view model =
         , importGoogleMapComponent
         , pureCSS
         , localcss
-        , div [] [ text (toString model.fields) ]
-          -- (TODO) remove when done field-querying
         , div [ id "layout" ]
             [ Html.App.map MenuAct (Menu.view menu model.mode)
             , loginView model
@@ -675,8 +762,16 @@ view model =
                         , model.symptoms |> viewTable symptomTable
                         ]
 
-                _ ->
-                    div [] [ text "To be implemented!" ]
+                MyInfoPage ->
+                    case model.loginStatus of
+                        Public ->
+                            div [] [ text "Please login to view your information." ]
+
+                        PatientLoggedIn pid ->
+                            div [] [ text ("You are logged in as patient " ++ (toString pid)) ]
+
+                        MedicLoggedIn mid ->
+                            div [] [ text ("You are logged in as medic " ++ (toString mid)) ]
             , googleMap
                 [ attribute "latitude" "40.793575"
                 , attribute "longitude" "-73.950564"

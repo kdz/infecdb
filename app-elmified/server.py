@@ -181,6 +181,26 @@ def validate_mid(mid):
     return jsonify(valid)
 
 
+
+@app.route('/medic-me-page', methods=['GET', 'POST'])
+def query_medic_me_page():
+
+    log("starting query_medic_me_page", "")
+
+    mid = request.json['mid']
+    cols = request.json['columns']
+
+    query_str = "SELECT * FROM medic WHERE mid=%s" % mid
+
+
+    mid_cursor = g.conn.execute(query_str)
+    info = [row_to_dict(row, cols) for row in mid_cursor][0]
+
+    log("completed medic_me_page", "")
+
+    return jsonify(info)
+
+
 # @app.route('/?', methods=['GET', 'POST'])
 # def deal_with_it():
 #     pass
