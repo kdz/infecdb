@@ -235,7 +235,7 @@ type alias Medic =
 
 type MePage
     = MePageMedic Medic
-    | MePagePatient
+    | MePagePatient Patient
     | NoMePage
 
 
@@ -804,7 +804,7 @@ loginView model =
                     div [] [ text ("logged in as Patient #" ++ (toString pid)) ]
 
                 MedicLoggedIn mid ->
-                    div [] [ text ("logged in as Medic #" ++ (toString mid)) ]
+                    viewMyInfo model.mePage
             ]
         , div [ onClick PIDLoginAttempt, class "pure-button" ] [ text "As Patient" ]
         , div [ onClick MIDLoginAttempt, class "pure-button" ] [ text "As Medic" ]
@@ -856,6 +856,51 @@ viewTable tbl objects =
                         )
                 )
             ]
+
+
+viewMyInfo : MePage -> Html Msg
+viewMyInfo page =
+    case page of
+        MePageMedic m ->
+            let
+                tbl =
+                    medicTable
+            in
+                table [ class "pure-table" ]
+                    [ caption []
+                        [ h2 [] [ text ("My Information: " ++ tbl.name) ]
+                        ]
+                    , thead []
+                        [ tr []
+                            (tbl.columns
+                                |> List.map
+                                    (\( name, getter ) ->
+                                        th []
+                                            [ text name
+                                            ]
+                                    )
+                            )
+                        ]
+                    , tbody []
+                        ([ m ]
+                            |> List.indexedMap
+                                (\ind obj ->
+                                    tr []
+                                        (List.map
+                                            (\( colName, getter ) ->
+                                                td [] [ text (getter obj) ]
+                                            )
+                                            tbl.columns
+                                        )
+                                )
+                        )
+                    ]
+
+        MePagePatient p ->
+            div [] []
+
+        NoMePage ->
+            div [] []
 
 
 scriptWebComponents : Html a
