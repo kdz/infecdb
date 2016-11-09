@@ -650,8 +650,8 @@ mePage model =
             medicMePageCmd mid
 
 
-medicMePageCmd : Int -> Cmd Msg
-medicMePageCmd mid =
+medicMePageMIDCmd : Int -> Cmd Msg
+medicMePageMIDCmd mid =
     {- Get a single medic's row from medic -}
     let
         body =
@@ -660,8 +660,29 @@ medicMePageCmd mid =
                 |> Encode.encode 1
                 |> Http.string
     in
-        (post' medicMePageDecoder (baseUrl ++ "/medic-me-page") body)
+        (post' medicMePageDecoder (baseUrl ++ "/medic-me") body)
             |> Task.perform RequestFail MedicMePageSucceed
+
+
+medicContactedCmd : Int -> Cmd Msg
+medicContactedCmd mid =
+    let
+        body =
+            [ ( "mid", Encode.int mid ), ( "columns", encodeCols patientTable.columns ) ]
+                |> Encode.object
+                |> Encode.encode 1
+                |> Http.string
+    in
+        (post' (Decode.list patientDecoder) (baseUrl ++ "/medic-checks-on") body)
+            |> Task.perform RequestFail PatientTableSucceed
+
+
+medicMePageCmd : Int -> Cmd Msg
+medicMePageCmd mid =
+    Cmd.batch
+        [ medicMePageMIDCmd mid
+        , medicContactedCmd mid
+        ]
 
 
 patientMePageCmd : Int -> Cmd Msg
@@ -772,7 +793,18 @@ view model =
                             div [] [ text ("You are logged in as patient " ++ (toString pid)) ]
 
                         MedicLoggedIn mid ->
-                            div [] [ text ("You are logged in as medic " ++ (toString mid)) ]
+                            div []
+                                [ text ("You are logged in as medic " ++ (toString mid))
+                                , case model.loginStatus of
+                                    Public ->
+                                        div [] [ text "not yet logged in" ]
+
+                                    PatientLoggedIn pid ->
+                                        div [] [ text ("logged in as Patient #" ++ (toString pid)) ]
+
+                                    MedicLoggedIn mid ->
+                                        viewMyInfo model
+                                ]
             , googleMap
                 [ attribute "latitude" "40.793575"
                 , attribute "longitude" "-73.950564"
@@ -797,15 +829,6 @@ loginView model =
                 ]
                 model.loginNumberModel
                 |> Html.App.map UpdateLogin
-            , case model.loginStatus of
-                Public ->
-                    div [] [ text "not yet logged in" ]
-
-                PatientLoggedIn pid ->
-                    div [] [ text ("logged in as Patient #" ++ (toString pid)) ]
-
-                MedicLoggedIn mid ->
-                    viewMyInfo model.mePage
             ]
         , div [ onClick PIDLoginAttempt, class "pure-button" ] [ text "As Patient" ]
         , div [ onClick MIDLoginAttempt, class "pure-button" ] [ text "As Medic" ]
@@ -859,9 +882,9 @@ viewTable tbl objects =
             ]
 
 
-viewMyInfo : MePage -> Html Msg
-viewMyInfo page =
-    case page of
+viewMyInfo : Model -> Html Msg
+viewMyInfo model =
+    case model.mePage of
         MePageMedic m ->
             let
                 tbl =
@@ -895,6 +918,7 @@ viewMyInfo page =
                                         )
                                 )
                         )
+                    , viewTable patientTable model.patients
                     ]
 
         MePagePatient p ->

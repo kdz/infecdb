@@ -99,7 +99,7 @@ def query_fields():
     fields = request.json['fields']
 
     query_str = "SELECT " + ",".join(cols) + " FROM " + table_name + \
-                " WHERE " + ",".join([table_name + "." + col + "=" + \
+                " WHERE " + " AND ".join([table_name + "." + col + "=" + \
                                       "'%s'" % val for [col, val] in
                                       fields])  # TODO: check query format is ok for non-string type
 
@@ -182,7 +182,7 @@ def validate_mid(mid):
 
 
 
-@app.route('/medic-me-page', methods=['GET', 'POST'])
+@app.route('/medic-me', methods=['GET', 'POST'])
 def query_medic_me_page():
     """ Returns a single medic row using specified mid. """
 
@@ -200,6 +200,30 @@ def query_medic_me_page():
     log("completed medic_me_page", "")
 
     return jsonify(medic)
+
+
+
+@app.route('/medic-checks-on', methods=['GET', 'POST'])
+def query_medic_checks_on():
+    """ Returns a single medic row using specified mid. """
+
+    log("starting medic-checks-on", "")
+
+    mid = request.json['mid']
+    cols = request.json['columns']
+
+    query_str = "SELECT " + ",".join(["p." + col for col in cols]) + " " + \
+                "FROM patient p LEFT OUTER JOIN checks_on c " + \
+                "ON p.pid=c.pid " + \
+                "WHERE c.mid='%s'" % mid
+
+
+    mid_cursor = g.conn.execute(query_str)
+    patients = [row_to_dict(row, cols) for row in mid_cursor]
+
+    log("completed medic-checks-on", "")
+
+    return jsonify(patients)
 
 
 # @app.route('/?', methods=['GET', 'POST'])
