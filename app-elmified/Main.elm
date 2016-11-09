@@ -36,9 +36,13 @@ main =
 -- MODEL
 
 
+type alias SelList a =
+    { list : List a, sel : Maybe Int }
+
+
 type alias Model =
-    { hospitals : List Hospital
-    , patients : List Patient
+    { hospitals : SelList Hospital
+    , patients : SelList Patient
     , otherPatients : List Patient
     , diseases : List Disease
     , symptoms : List Symptom
@@ -54,8 +58,8 @@ type alias Model =
 
 initModel : Model
 initModel =
-    { hospitals = []
-    , patients = []
+    { hospitals = { list = [], sel = Nothing }
+    , patients = { list = [], sel = Nothing }
     , otherPatients = []
     , diseases = []
     , symptoms = []
@@ -270,11 +274,14 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
+        _ =
+            Debug.log "patients.sel -> patients.sel" ( model.patients.sel, (fst result).patients.sel )
+
         result =
             case msg of
                 HospitalTableSucceed incomingHospitals ->
                     ( { model
-                        | hospitals = incomingHospitals
+                        | hospitals = { list = incomingHospitals, sel = Nothing }
                         , fields = tableFields hospitalTable
                       }
                     , Cmd.none
@@ -282,7 +289,7 @@ update msg model =
 
                 PatientTableSucceed incomingPatients ->
                     ( { model
-                        | patients = incomingPatients
+                        | patients = { list = incomingPatients, sel = Nothing }
                         , fields = tableFields patientTable
                       }
                     , Cmd.none
@@ -408,13 +415,32 @@ update msg model =
                     ( model, Cmd.none )
 
                 DiseaseByHospital tblName ind ->
-                    ( model, diseaseByHospitalCmd (primaryKey model tblName ind) )
+                    let
+                        hospitals =
+                            model.hospitals
+
+                        hospWithSelection =
+                            { hospitals | sel = Just ind }
+                    in
+                        ( { model | hospitals = hospWithSelection }
+                        , diseaseByHospitalCmd (primaryKey model tblName ind)
+                        )
 
                 SymptomByDisease tblName ind ->
                     ( model, sympByDiseaseCmd (primaryKey model tblName ind) )
 
                 PatientByContactSource tblName ind ->
-                    ( model, patientByContactedSourceCmd (primaryKey model tblName ind) )
+                    -- ( model, patientByContactedSourceCmd (primaryKey model tblName ind) )
+                    let
+                        patients =
+                            model.patients
+
+                        patientsWithSelection =
+                            { patients | sel = Just ind }
+                    in
+                        ( { model | patients = patientsWithSelection }
+                        , patientByContactedSourceCmd (primaryKey model tblName ind)
+                        )
 
         _ =
             Debug.log "update: " ( msg, model.mode, model.loginStatus )
@@ -602,7 +628,7 @@ primaryKey model tblName ind =
     if tblName == "hospital" then
         let
             h =
-                (getNth model.hospitals ind)
+                (getNth model.hospitals.list ind)
         in
             case h of
                 Just hosp ->
@@ -626,7 +652,7 @@ primaryKey model tblName ind =
     else if tblName == "patient" then
         let
             p =
-                (getNth model.patients ind)
+                (getNth model.patients.list ind)
         in
             case p of
                 Just pat ->
@@ -882,20 +908,20 @@ view model =
             , case model.mode of
                 HospitalPage ->
                     div []
-                        [ model.hospitals |> viewTable "Hospitals" True hospitalTable
-                        , model.diseases |> viewTable "Diseases Treated" False diseaseTable
+                        [ model.hospitals.list |> viewTable "Hospitals" True hospitalTable model.hospitals.sel
+                        , model.diseases |> viewTable "Diseases Treated" False diseaseTable Nothing
                         ]
 
                 PatientPage ->
                     div []
-                        [ model.patients |> viewTable "Patients" True patientTable
-                        , model.otherPatients |> viewTable "Contacts" False patientTable
+                        [ model.patients.list |> viewTable "Patients" True patientTable model.patients.sel
+                        , model.otherPatients |> viewTable "Contacts" False patientTable Nothing
                         ]
 
                 DiseasePage ->
                     div []
-                        [ model.diseases |> viewTable "Diseases" True diseaseTable
-                        , model.symptoms |> viewTable "Symptoms" False symptomTable
+                        [ model.diseases |> viewTable "Diseases" True diseaseTable Nothing
+                        , model.symptoms |> viewTable "Symptoms" False symptomTable Nothing
                         ]
 
                 MyInfoPage ->
@@ -943,8 +969,8 @@ loginView model =
             ]
 
 
-viewTable : String -> Bool -> Table a -> List a -> Html Msg
-viewTable header searchable tbl objects =
+viewTable : String -> Bool -> Table a -> Maybe Int -> List a -> Html Msg
+viewTable header searchable tbl selIdx objects =
     let
         rowMsg =
             if tbl.name == "hospital" then
@@ -955,6 +981,33 @@ viewTable header searchable tbl objects =
                 SymptomByDisease
             else
                 NoJoin
+
+        selectionIndex =
+            case selIdx of
+                Nothing ->
+                    -99
+
+                Just i ->
+                    i
+
+        rowAttrs i =
+            let
+                click =
+                    if searchable then
+                        [ onClick (rowMsg tbl.name i) ]
+                    else
+                        []
+
+                sel =
+                    if selectionIndex == i then
+                        [ class "pure-table-odd" ]
+                    else
+                        []
+
+                _ =
+                    Debug.log "row Attrs: selIdx, i, click, sel" ( selIdx, i, click, sel )
+            in
+                click ++ sel
     in
         table [ class "pure-table" ]
             [ caption []
@@ -985,12 +1038,7 @@ viewTable header searchable tbl objects =
                     |> List.indexedMap
                         (\ind obj ->
                             tr
-                                [ (if searchable then
-                                    onClick (rowMsg tbl.name ind)
-                                   else
-                                    class ""
-                                  )
-                                ]
+                                (rowAttrs ind)
                                 (List.map
                                     (\( colName, getter ) ->
                                         td [] [ text (getter obj) ]
@@ -1041,10 +1089,10 @@ viewMyInfo model =
                             )
                         ]
                     , p []
-                        [ viewTable "Your Patients" False patientTable model.patients
+                        [ model.patients.list |> viewTable "Your Patients" False patientTable Nothing
                         ]
                     , p []
-                        [ viewTable "Today's todo list" False patientTable model.otherPatients
+                        [ model.otherPatients |> viewTable "Today's todo list" False patientTable Nothing
                         ]
                     ]
 
@@ -1084,13 +1132,13 @@ viewMyInfo model =
                             )
                         ]
                     , Html.p []
-                        [ viewTable "Your Doctor" False medicTable model.medics
+                        [ model.medics |> viewTable "Your Doctor" False medicTable Nothing
                         ]
                     , Html.p []
-                        [ viewTable "Your Symptoms" False symptomTable model.symptoms
+                        [ model.symptoms |> viewTable "Your Symptoms" False symptomTable Nothing
                         ]
                     , Html.p []
-                        [ viewTable "Your Disease Diagnosis" False diseaseTable model.diseases
+                        [ model.diseases |> viewTable "Your Disease Diagnosis" False diseaseTable Nothing
                         ]
                     ]
 
