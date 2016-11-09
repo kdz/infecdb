@@ -426,4 +426,4 @@ def log(msg, x):
 # Run app
 
 if __name__ == "__main__":
-    app.run(debug=True, port=8111)
+    app.run(debug=True, port=8111, host='40.121.55.50')
