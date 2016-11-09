@@ -574,8 +574,8 @@ var _user$project$Main$UpdateFieldInput = F2(
 	function (a, b) {
 		return {ctor: 'UpdateFieldInput', _0: a, _1: b};
 	});
-var _user$project$Main$viewTable = F3(
-	function (header, tbl, objects) {
+var _user$project$Main$viewTable = F4(
+	function (header, searchable, tbl, objects) {
 		var rowMsg = _elm_lang$core$Native_Utils.eq(tbl.name, 'hospital') ? _user$project$Main$DiseaseByHospital : (_elm_lang$core$Native_Utils.eq(tbl.name, 'patient') ? _user$project$Main$PatientByContactSource : (_elm_lang$core$Native_Utils.eq(tbl.name, 'disease') ? _user$project$Main$SymptomByDisease : _user$project$Main$NoJoin));
 		return A2(
 			_elm_lang$html$Html$table,
@@ -599,7 +599,7 @@ var _user$project$Main$viewTable = F3(
 								[
 									_elm_lang$html$Html$text(header)
 								])),
-							A2(
+							searchable ? A2(
 							_elm_lang$html$Html$div,
 							_elm_lang$core$Native_List.fromArray(
 								[
@@ -609,7 +609,12 @@ var _user$project$Main$viewTable = F3(
 							_elm_lang$core$Native_List.fromArray(
 								[
 									_elm_lang$html$Html$text('search')
-								]))
+								])) : A2(
+							_elm_lang$html$Html$span,
+							_elm_lang$core$Native_List.fromArray(
+								[]),
+							_elm_lang$core$Native_List.fromArray(
+								[]))
 						])),
 					A2(
 					_elm_lang$html$Html$thead,
@@ -633,13 +638,18 @@ var _user$project$Main$viewTable = F3(
 										_elm_lang$core$Native_List.fromArray(
 											[
 												_elm_lang$html$Html$text(_p9),
-												A2(
+												searchable ? A2(
 												_elm_lang$html$Html$input,
 												_elm_lang$core$Native_List.fromArray(
 													[
 														_elm_lang$html$Html_Events$onInput(
 														_user$project$Main$UpdateFieldInput(_p9))
 													]),
+												_elm_lang$core$Native_List.fromArray(
+													[])) : A2(
+												_elm_lang$html$Html$span,
+												_elm_lang$core$Native_List.fromArray(
+													[]),
 												_elm_lang$core$Native_List.fromArray(
 													[]))
 											]));
@@ -777,7 +787,7 @@ var _user$project$Main$viewMyInfo = function (model) {
 							[]),
 						_elm_lang$core$Native_List.fromArray(
 							[
-								A3(_user$project$Main$viewTable, 'Your Patients', _user$project$Main$patientTable, model.patients)
+								A4(_user$project$Main$viewTable, 'Your Patients', false, _user$project$Main$patientTable, model.patients)
 							])),
 						A2(
 						_elm_lang$html$Html$p,
@@ -785,7 +795,7 @@ var _user$project$Main$viewMyInfo = function (model) {
 							[]),
 						_elm_lang$core$Native_List.fromArray(
 							[
-								A3(_user$project$Main$viewTable, 'Today\'s todo list', _user$project$Main$patientTable, model.otherPatients)
+								A4(_user$project$Main$viewTable, 'Today\'s todo list', false, _user$project$Main$patientTable, model.otherPatients)
 							]))
 					]));
 		case 'MePagePatient':
@@ -932,8 +942,8 @@ var _user$project$Main$view = function (model) {
 										[]),
 									_elm_lang$core$Native_List.fromArray(
 										[
-											A3(_user$project$Main$viewTable, 'Hospitals', _user$project$Main$hospitalTable, model.hospitals),
-											A3(_user$project$Main$viewTable, 'Diseases Treated', _user$project$Main$diseaseTable, model.diseases)
+											A4(_user$project$Main$viewTable, 'Hospitals', true, _user$project$Main$hospitalTable, model.hospitals),
+											A4(_user$project$Main$viewTable, 'Diseases Treated', false, _user$project$Main$diseaseTable, model.diseases)
 										]));
 							case 'PatientPage':
 								return A2(
@@ -942,8 +952,8 @@ var _user$project$Main$view = function (model) {
 										[]),
 									_elm_lang$core$Native_List.fromArray(
 										[
-											A3(_user$project$Main$viewTable, 'Patients', _user$project$Main$patientTable, model.patients),
-											A3(_user$project$Main$viewTable, 'Contacts', _user$project$Main$patientTable, model.otherPatients)
+											A4(_user$project$Main$viewTable, 'Patients', true, _user$project$Main$patientTable, model.patients),
+											A4(_user$project$Main$viewTable, 'Contacts', false, _user$project$Main$patientTable, model.otherPatients)
 										]));
 							case 'DiseasePage':
 								return A2(
@@ -952,8 +962,8 @@ var _user$project$Main$view = function (model) {
 										[]),
 									_elm_lang$core$Native_List.fromArray(
 										[
-											A3(_user$project$Main$viewTable, 'Diseases', _user$project$Main$diseaseTable, model.diseases),
-											A3(_user$project$Main$viewTable, 'Symptoms', _user$project$Main$symptomTable, model.symptoms)
+											A4(_user$project$Main$viewTable, 'Diseases', true, _user$project$Main$diseaseTable, model.diseases),
+											A4(_user$project$Main$viewTable, 'Symptoms', false, _user$project$Main$symptomTable, model.symptoms)
 										]));
 							default:
 								var _p18 = model.loginStatus;

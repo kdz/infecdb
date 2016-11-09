@@ -818,20 +818,20 @@ view model =
             , case model.mode of
                 HospitalPage ->
                     div []
-                        [ model.hospitals |> viewTable "Hospitals" hospitalTable
-                        , model.diseases |> viewTable "Diseases Treated" diseaseTable
+                        [ model.hospitals |> viewTable "Hospitals" True hospitalTable
+                        , model.diseases |> viewTable "Diseases Treated" False diseaseTable
                         ]
 
                 PatientPage ->
                     div []
-                        [ model.patients |> viewTable "Patients" patientTable
-                        , model.otherPatients |> viewTable "Contacts" patientTable
+                        [ model.patients |> viewTable "Patients" True patientTable
+                        , model.otherPatients |> viewTable "Contacts" False patientTable
                         ]
 
                 DiseasePage ->
                     div []
-                        [ model.diseases |> viewTable "Diseases" diseaseTable
-                        , model.symptoms |> viewTable "Symptoms" symptomTable
+                        [ model.diseases |> viewTable "Diseases" True diseaseTable
+                        , model.symptoms |> viewTable "Symptoms" False symptomTable
                         ]
 
                 MyInfoPage ->
@@ -885,8 +885,8 @@ loginView model =
         ]
 
 
-viewTable : String -> Table a -> List a -> Html Msg
-viewTable header tbl objects =
+viewTable : String -> Bool -> Table a -> List a -> Html Msg
+viewTable header searchable tbl objects =
     let
         rowMsg =
             if tbl.name == "hospital" then
@@ -901,7 +901,10 @@ viewTable header tbl objects =
         table [ class "pure-table" ]
             [ caption []
                 [ h2 [] [ text header ]
-                , div [ class "pure-button pure-button-active", onClick FieldSearch ] [ text "search" ]
+                , if searchable then
+                    div [ class "pure-button pure-button-active", onClick FieldSearch ] [ text "search" ]
+                  else
+                    span [] []
                 ]
             , thead []
                 [ tr []
@@ -910,7 +913,10 @@ viewTable header tbl objects =
                             (\( name, getter ) ->
                                 th []
                                     [ text name
-                                    , input [ onInput (UpdateFieldInput name) ] []
+                                    , if searchable then
+                                        input [ onInput (UpdateFieldInput name) ] []
+                                      else
+                                        span [] []
                                     ]
                             )
                     )
@@ -971,10 +977,10 @@ viewMyInfo model =
                             )
                         ]
                     , p []
-                        [ viewTable "Your Patients" patientTable model.patients
+                        [ viewTable "Your Patients" False patientTable model.patients
                         ]
                     , p []
-                        [ viewTable "Today's todo list" patientTable model.otherPatients
+                        [ viewTable "Today's todo list" False patientTable model.otherPatients
                         ]
                     ]
 

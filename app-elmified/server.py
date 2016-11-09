@@ -98,10 +98,11 @@ def query_fields():
     cols = request.json['columns']
     fields = request.json['fields']
 
-    query_str = "SELECT " + ",".join(cols) + " FROM " + table_name + \
-                " WHERE " + " AND ".join([table_name + "." + col + "=" + \
-                                      "'%s'" % val for [col, val] in
-                                      fields])  # TODO: check query format is ok for non-string type
+    where_clause = ( " WHERE " + " AND ".join([table_name + "." + col + "=" + \
+                                             "'%s'" % val for [col, val] in
+                                             fields]) ) if fields else ""
+
+    query_str = "SELECT " + ",".join(cols) + " FROM " + table_name + where_clause
 
     cursor = g.conn.execute(query_str)
     info = [row_to_dict(row, cols) for row in cursor]
@@ -158,6 +159,7 @@ def query_disease_by_hospital():
 
 @app.route('/patient-by-contacted-source', methods=['GET', 'POST'])
 def query_patient_by_contact_source():
+    """ Query for patients exposed to given pid of source patient. """
 
     log("starting patient_by_contact_source", "")
 
