@@ -44,7 +44,7 @@ type alias Model =
     { hospitals : SelList Hospital
     , patients : SelList Patient
     , otherPatients : List Patient
-    , diseases : List Disease
+    , diseases : SelList Disease
     , symptoms : List Symptom
     , medics : List Medic
     , mePage : MePage
@@ -61,7 +61,7 @@ initModel =
     { hospitals = { list = [], sel = Nothing }
     , patients = { list = [], sel = Nothing }
     , otherPatients = []
-    , diseases = []
+    , diseases = { list = [], sel = Nothing }
     , symptoms = []
     , medics = []
     , mePage = NoMePage
@@ -275,7 +275,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
         _ =
-            Debug.log "patients.sel -> patients.sel" ( model.patients.sel, (fst result).patients.sel )
+            Debug.log "diseases.sel -> diseases.sel" ( model.diseases.sel, (fst result).diseases.sel )
 
         result =
             case msg of
@@ -305,7 +305,7 @@ update msg model =
 
                 DiseaseTableSucceed incomingDiseases ->
                     ( { model
-                        | diseases = incomingDiseases
+                        | diseases = { list = incomingDiseases, sel = Nothing }
                         , fields = tableFields diseaseTable
                       }
                     , Cmd.none
@@ -427,7 +427,17 @@ update msg model =
                         )
 
                 SymptomByDisease tblName ind ->
-                    ( model, sympByDiseaseCmd (primaryKey model tblName ind) )
+                    -- ( model, sympByDiseaseCmd (primaryKey model tblName ind) )
+                    let
+                        diseases =
+                            model.diseases
+
+                        diseasesWithSelection =
+                            { diseases | sel = Just ind }
+                    in
+                        ( { model | diseases = diseasesWithSelection }
+                        , sympByDiseaseCmd (primaryKey model tblName ind)
+                        )
 
                 PatientByContactSource tblName ind ->
                     -- ( model, patientByContactedSourceCmd (primaryKey model tblName ind) )
@@ -640,7 +650,7 @@ primaryKey model tblName ind =
     else if tblName == "disease" then
         let
             d =
-                (getNth model.diseases ind)
+                (getNth model.diseases.list ind)
         in
             case d of
                 Just dis ->
@@ -909,7 +919,7 @@ view model =
                 HospitalPage ->
                     div []
                         [ model.hospitals.list |> viewTable "Hospitals" True hospitalTable model.hospitals.sel
-                        , model.diseases |> viewTable "Diseases Treated" False diseaseTable Nothing
+                        , model.diseases.list |> viewTable "Diseases Treated" False diseaseTable Nothing
                         ]
 
                 PatientPage ->
@@ -920,7 +930,7 @@ view model =
 
                 DiseasePage ->
                     div []
-                        [ model.diseases |> viewTable "Diseases" True diseaseTable Nothing
+                        [ model.diseases.list |> viewTable "Diseases" True diseaseTable model.diseases.sel
                         , model.symptoms |> viewTable "Symptoms" False symptomTable Nothing
                         ]
 
@@ -1138,7 +1148,7 @@ viewMyInfo model =
                         [ model.symptoms |> viewTable "Your Symptoms" False symptomTable Nothing
                         ]
                     , Html.p []
-                        [ model.diseases |> viewTable "Your Disease Diagnosis" False diseaseTable Nothing
+                        [ model.diseases.list |> viewTable "Your Disease Diagnosis" False diseaseTable Nothing
                         ]
                     ]
 
