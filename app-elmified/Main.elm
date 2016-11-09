@@ -94,6 +94,12 @@ type Status
     | MedicLoggedIn Int
 
 
+type MePage
+    = MePageMedic Medic
+    | MePagePatient Patient
+    | NoMePage
+
+
 type alias Field =
     { name : String
     , val : String
@@ -235,12 +241,6 @@ type alias Medic =
     }
 
 
-type MePage
-    = MePageMedic Medic
-    | MePagePatient Patient
-    | NoMePage
-
-
 type Msg
     = HospitalTableSucceed (List Hospital)
     | RequestFail Http.Error
@@ -255,6 +255,7 @@ type Msg
     | DiseaseTableSucceed (List Disease)
     | SymptomByDiseaseSucceed (List Symptom)
     | MedicMePageSucceed Medic
+    | PatientMePageSucceed Patient
     | UpdateFieldInput String String
     | FieldSearch
     | NoJoin String Int
@@ -305,6 +306,9 @@ update msg model =
 
                 MedicMePageSucceed medicInfo ->
                     ( { model | mePage = MePageMedic medicInfo }, Cmd.none )
+
+                PatientMePageSucceed patientInfo ->
+                    ( { model | mePage = MePagePatient patientInfo }, Cmd.none )
 
                 RequestFail err ->
                     ( model, Cmd.none )
@@ -677,8 +681,9 @@ mePage model =
             Cmd.none
 
         PatientLoggedIn pid ->
-            patientMePageCmd pid
+            Cmd.none
 
+        -- patientMePageCmd pid
         MedicLoggedIn mid ->
             medicMePageCmd mid
 
@@ -733,8 +738,22 @@ medicsToDoCmd mid =
 
 
 patientMePageCmd : Int -> Cmd Msg
-patientMePageCmd mid =
-    Cmd.none
+patientMePageCmd pid =
+    patientMePageCmd pid
+
+
+patientMePagePIDCmd : Int -> Cmd Msg
+patientMePagePIDCmd pid =
+    {- Get a single patient's row from patient -}
+    let
+        body =
+            [ ( "pid", Encode.int pid ), ( "columns", encodeCols patientTable.columns ) ]
+                |> Encode.object
+                |> Encode.encode 1
+                |> Http.string
+    in
+        (post' patientDecoder (baseUrl ++ "/patient-me") body)
+            |> Task.perform RequestFail PatientMePageSucceed
 
 
 
@@ -845,15 +864,7 @@ view model =
                         MedicLoggedIn mid ->
                             div []
                                 [ text ("You are logged in as medic " ++ (toString mid))
-                                , case model.loginStatus of
-                                    Public ->
-                                        div [] [ text "not yet logged in" ]
-
-                                    PatientLoggedIn pid ->
-                                        div [] [ text ("logged in as Patient #" ++ (toString pid)) ]
-
-                                    MedicLoggedIn mid ->
-                                        viewMyInfo model
+                                , viewMyInfo model
                                 ]
             , googleMap
                 [ attribute "latitude" "40.793575"
@@ -867,22 +878,35 @@ view model =
 
 loginView : Model -> Html Msg
 loginView model =
-    Html.div []
-        [ Html.p []
-            [ Html.label [ for model.loginNumberOptions.id ] [ text "Login ID" ]
-            , Number.input model.loginNumberOptions
-                [ style
-                    [ ( "border", "1px solid #ccc" )
-                    , ( "padding", ".5rem" )
-                    , ( "box-shadow", "inset 0 1px 1px rgba(0,0,0,.075);" )
+    let
+        loginMsg =
+            case model.loginStatus of
+                Public ->
+                    ""
+
+                PatientLoggedIn pid ->
+                    "Logged in as patient " ++ (toString pid)
+
+                MedicLoggedIn mid ->
+                    "Logged in as medic " ++ (toString mid)
+    in
+        Html.div []
+            [ Html.p []
+                [ Html.label [ for model.loginNumberOptions.id ] [ text "Login ID" ]
+                , Number.input model.loginNumberOptions
+                    [ style
+                        [ ( "border", "1px solid #ccc" )
+                        , ( "padding", ".5rem" )
+                        , ( "box-shadow", "inset 0 1px 1px rgba(0,0,0,.075);" )
+                        ]
                     ]
+                    model.loginNumberModel
+                    |> Html.App.map UpdateLogin
+                , text loginMsg
                 ]
-                model.loginNumberModel
-                |> Html.App.map UpdateLogin
+            , div [ onClick PIDLoginAttempt, class "pure-button" ] [ text "As Patient" ]
+            , div [ onClick MIDLoginAttempt, class "pure-button" ] [ text "As Medic" ]
             ]
-        , div [ onClick PIDLoginAttempt, class "pure-button" ] [ text "As Patient" ]
-        , div [ onClick MIDLoginAttempt, class "pure-button" ] [ text "As Medic" ]
-        ]
 
 
 viewTable : String -> Bool -> Table a -> List a -> Html Msg
@@ -985,7 +1009,47 @@ viewMyInfo model =
                     ]
 
         MePagePatient p ->
-            div [] []
+            let
+                tbl =
+                    patientTable
+            in
+                div []
+                    [ table [ class "pure-table" ]
+                        [ caption []
+                            [ h2 [] [ text ("My Information: " ++ tbl.name) ]
+                            ]
+                        , thead []
+                            [ tr []
+                                (tbl.columns
+                                    |> List.map
+                                        (\( name, getter ) ->
+                                            th []
+                                                [ text name
+                                                ]
+                                        )
+                                )
+                            ]
+                        , tbody []
+                            ([ p ]
+                                |> List.indexedMap
+                                    (\ind obj ->
+                                        tr []
+                                            (List.map
+                                                (\( colName, getter ) ->
+                                                    td [] [ text (getter obj) ]
+                                                )
+                                                tbl.columns
+                                            )
+                                    )
+                            )
+                        ]
+                      -- , p []
+                      --     [ viewTable "Your Patients" False patientTable model.patients
+                      --     ]
+                      -- , p []
+                      --     [ viewTable "Today's todo list" False patientTable model.otherPatients
+                      -- ]
+                    ]
 
         NoMePage ->
             div [] []

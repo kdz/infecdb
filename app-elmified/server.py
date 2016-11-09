@@ -229,6 +229,27 @@ def query_medic_me_page():
 
 
 
+@app.route('/patient-me', methods=['GET', 'POST'])
+def query_patient_me_page():
+    """ Returns a single medic row using specified mid. """
+
+    log("starting query_patient_me_page", "")
+
+    pid = request.json['pid']
+    cols = request.json['columns']
+
+    query_str = "SELECT * FROM patient WHERE pid=%s" % pid
+
+
+    mid_cursor = g.conn.execute(query_str)
+    patient = [row_to_dict(row, cols) for row in mid_cursor][0]
+
+    log("completed query_patient_me_page", "")
+
+    return jsonify(patient)
+
+
+
 @app.route('/medic-checks-on', methods=['GET', 'POST'])
 def query_medic_checks_on():
     """ Returns a single medic row using specified mid. """
