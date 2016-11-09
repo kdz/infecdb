@@ -39,6 +39,7 @@ main =
 type alias Model =
     { hospitals : List Hospital
     , patients : List Patient
+    , medicTodo : List Patient
     , diseases : List Disease
     , symptoms : List Symptom
     , mePage : MePage
@@ -54,6 +55,7 @@ initModel : Model
 initModel =
     { hospitals = []
     , patients = []
+    , medicTodo = []
     , diseases = []
     , symptoms = []
     , mePage = NoMePage
@@ -249,6 +251,7 @@ type Msg
     | PIDLoginSuccess Bool
     | MIDLoginSuccess Bool
     | PatientTableSucceed (List Patient)
+    | TodoTableSucceed (List Patient)
     | DiseaseTableSucceed (List Disease)
     | SymptomByDiseaseSucceed (List Symptom)
     | MedicMePageSucceed Medic
@@ -275,6 +278,14 @@ update msg model =
                 PatientTableSucceed incomingPatients ->
                     ( { model
                         | patients = incomingPatients
+                        , fields = tableFields patientTable
+                      }
+                    , Cmd.none
+                    )
+
+                TodoTableSucceed incomingPatients ->
+                    ( { model
+                        | medicTodo = incomingPatients
                         , fields = tableFields patientTable
                       }
                     , Cmd.none
@@ -677,11 +688,25 @@ medicContactedCmd mid =
             |> Task.perform RequestFail PatientTableSucceed
 
 
+medicsToDoCmd : Int -> Cmd Msg
+medicsToDoCmd mid =
+    let
+        body =
+            [ ( "mid", Encode.int mid ), ( "columns", encodeCols patientTable.columns ) ]
+                |> Encode.object
+                |> Encode.encode 1
+                |> Http.string
+    in
+        (post' (Decode.list patientDecoder) (baseUrl ++ "/medic-todo") body)
+            |> Task.perform RequestFail TodoTableSucceed
+
+
 medicMePageCmd : Int -> Cmd Msg
 medicMePageCmd mid =
     Cmd.batch
         [ medicMePageMIDCmd mid
         , medicContactedCmd mid
+        , medicsToDoCmd mid
         ]
 
 
@@ -771,17 +796,17 @@ view model =
             , case model.mode of
                 HospitalPage ->
                     div []
-                        [ model.hospitals |> viewTable hospitalTable
-                        , model.diseases |> viewTable diseaseTable
+                        [ model.hospitals |> viewTable "Hospitals" hospitalTable
+                        , model.diseases |> viewTable "Diseases Treated" diseaseTable
                         ]
 
                 PatientPage ->
-                    model.patients |> viewTable patientTable
+                    model.patients |> viewTable "Patients" patientTable
 
                 DiseasePage ->
                     div []
-                        [ model.diseases |> viewTable diseaseTable
-                        , model.symptoms |> viewTable symptomTable
+                        [ model.diseases |> viewTable "Diseases" diseaseTable
+                        , model.symptoms |> viewTable "Symptoms" symptomTable
                         ]
 
                 MyInfoPage ->
@@ -835,8 +860,8 @@ loginView model =
         ]
 
 
-viewTable : Table a -> List a -> Html Msg
-viewTable tbl objects =
+viewTable : String -> Table a -> List a -> Html Msg
+viewTable header tbl objects =
     let
         rowMsg =
             if tbl.name == "hospital" then
@@ -850,7 +875,7 @@ viewTable tbl objects =
     in
         table [ class "pure-table" ]
             [ caption []
-                [ h2 [] [ text tbl.name ]
+                [ h2 [] [ text header ]
                 , div [ class "pure-button pure-button-active", onClick FieldSearch ] [ text "search" ]
                 ]
             , thead []
@@ -890,35 +915,42 @@ viewMyInfo model =
                 tbl =
                     medicTable
             in
-                table [ class "pure-table" ]
-                    [ caption []
-                        [ h2 [] [ text ("My Information: " ++ tbl.name) ]
-                        ]
-                    , thead []
-                        [ tr []
-                            (tbl.columns
-                                |> List.map
-                                    (\( name, getter ) ->
-                                        th []
-                                            [ text name
-                                            ]
+                div []
+                    [ table [ class "pure-table" ]
+                        [ caption []
+                            [ h2 [] [ text ("My Information: " ++ tbl.name) ]
+                            ]
+                        , thead []
+                            [ tr []
+                                (tbl.columns
+                                    |> List.map
+                                        (\( name, getter ) ->
+                                            th []
+                                                [ text name
+                                                ]
+                                        )
+                                )
+                            ]
+                        , tbody []
+                            ([ m ]
+                                |> List.indexedMap
+                                    (\ind obj ->
+                                        tr []
+                                            (List.map
+                                                (\( colName, getter ) ->
+                                                    td [] [ text (getter obj) ]
+                                                )
+                                                tbl.columns
+                                            )
                                     )
                             )
                         ]
-                    , tbody []
-                        ([ m ]
-                            |> List.indexedMap
-                                (\ind obj ->
-                                    tr []
-                                        (List.map
-                                            (\( colName, getter ) ->
-                                                td [] [ text (getter obj) ]
-                                            )
-                                            tbl.columns
-                                        )
-                                )
-                        )
-                    , viewTable patientTable model.patients
+                    , p []
+                        [ viewTable "Your Patients" patientTable model.patients
+                        ]
+                    , p []
+                        [ viewTable "Today's todo list" patientTable model.medicTodo
+                        ]
                     ]
 
         MePagePatient p ->

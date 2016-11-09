@@ -226,6 +226,57 @@ def query_medic_checks_on():
     return jsonify(patients)
 
 
+
+@app.route('/medic-todo', methods=['GET', 'POST'])
+def query_medic_todo():
+    """ Returns a single medic row using specified mid. """
+
+    log("starting medic-todo", "")
+
+    mid = request.json['mid']
+    cols = request.json['columns']
+
+    query_str = \
+        """
+            SELECT %s, SQRT((geoInfo.latDiff*geoInfo.latDiff)+(geoInfo.longDiff*geoInfo.longDiff)) AS distance
+            FROM
+                (   SELECT medNum.mid, patNum.pid, (medNum.latitude - patNum.latitude) AS latDiff, (medNum.longitude - patNum.longitude) AS longDiff
+                    FROM (  SELECT medic.mid, MedLat.latitude, MedLong.longitude
+                            FROM (  SELECT medic1.mid, CAST (medic1.latitude as DECIMAL(30,15)) AS latitude
+                                    FROM medic AS medic1)
+                         as MedLat,
+                         (   SELECT medic2.mid, CAST (medic2.longitude as DECIMAL(30,15)) longitude
+                            FROM medic AS medic2)
+                         as MedLong,
+                         medic
+                    WHERE medic.mid= MedLat.mid AND medic.mid = MedLong.mid)
+                    AS medNum
+                CROSS JOIN
+                    (   SELECT patient.pid, PatLat.latitude, PatLong.longitude
+                        FROM (  SELECT patient1.pid, CAST (patient1.latitude as DECIMAL(30,15)) AS latitude
+                                FROM patient AS patient1)
+                             as PatLat,
+                             (  SELECT patient2.pid, CAST (patient2.longitude as DECIMAL(30,15)) longitude
+                                FROM patient AS patient2)
+                            as PatLong,
+                            patient
+                        WHERE patient.pid = PatLat.pid AND patient.pid = PatLong.pid) AS patNum )
+                    AS geoInfo,
+                    patient AS pat
+            WHERE geoInfo.mid = %s AND pat.pid = geoInfo.pid
+            ORDER BY distance ASC
+            LIMIT 5
+        """ % (",".join(["pat." + col for col in cols]), mid)
+
+
+    mid_cursor = g.conn.execute(query_str)
+    patients = [row_to_dict(row, cols) for row in mid_cursor]
+
+    log("completed medic-todo", "")
+
+    return jsonify(patients)
+
+
 # @app.route('/?', methods=['GET', 'POST'])
 # def deal_with_it():
 #     pass
