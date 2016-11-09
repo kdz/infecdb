@@ -40,14 +40,6 @@ var _user$project$Main$scriptWebComponents = A3(
 		]),
 	_elm_lang$core$Native_List.fromArray(
 		[]));
-var _user$project$Main$patientMePageCmd = function (pid) {
-	patientMePageCmd:
-	while (true) {
-		var _v0 = pid;
-		pid = _v0;
-		continue patientMePageCmd;
-	}
-};
 var _user$project$Main$getNth = F2(
 	function (items, i) {
 		return A2(
@@ -673,8 +665,8 @@ var _user$project$Main$viewTable = F4(
 									_elm_lang$html$Html$tr,
 									_elm_lang$core$Native_List.fromArray(
 										[
-											_elm_lang$html$Html_Events$onClick(
-											A2(rowMsg, tbl.name, ind))
+											searchable ? _elm_lang$html$Html_Events$onClick(
+											A2(rowMsg, tbl.name, ind)) : _elm_lang$html$Html_Attributes$class('')
 										]),
 									A2(
 										_elm_lang$core$List$map,
@@ -898,7 +890,9 @@ var _user$project$Main$viewMyInfo = function (model) {
 				_elm_lang$core$Native_List.fromArray(
 					[]),
 				_elm_lang$core$Native_List.fromArray(
-					[]));
+					[
+						_elm_lang$html$Html$text('Please login to view your information.')
+					]));
 	}
 };
 var _user$project$Main$PatientMePageSucceed = function (a) {
@@ -1074,45 +1068,7 @@ var _user$project$Main$view = function (model) {
 											A4(_user$project$Main$viewTable, 'Symptoms', false, _user$project$Main$symptomTable, model.symptoms)
 										]));
 							default:
-								var _p23 = model.loginStatus;
-								switch (_p23.ctor) {
-									case 'Public':
-										return A2(
-											_elm_lang$html$Html$div,
-											_elm_lang$core$Native_List.fromArray(
-												[]),
-											_elm_lang$core$Native_List.fromArray(
-												[
-													_elm_lang$html$Html$text('Please login to view your information.')
-												]));
-									case 'PatientLoggedIn':
-										return A2(
-											_elm_lang$html$Html$div,
-											_elm_lang$core$Native_List.fromArray(
-												[]),
-											_elm_lang$core$Native_List.fromArray(
-												[
-													_elm_lang$html$Html$text(
-													A2(
-														_elm_lang$core$Basics_ops['++'],
-														'You are logged in as patient ',
-														_elm_lang$core$Basics$toString(_p23._0)))
-												]));
-									default:
-										return A2(
-											_elm_lang$html$Html$div,
-											_elm_lang$core$Native_List.fromArray(
-												[]),
-											_elm_lang$core$Native_List.fromArray(
-												[
-													_elm_lang$html$Html$text(
-													A2(
-														_elm_lang$core$Basics_ops['++'],
-														'You are logged in as medic ',
-														_elm_lang$core$Basics$toString(_p23._0))),
-													_user$project$Main$viewMyInfo(model)
-												]));
-								}
+								return _user$project$Main$viewMyInfo(model);
 						}
 					}(),
 						A2(
@@ -1331,7 +1287,7 @@ var _user$project$Main$patientByContactedSourceCmd = function (pid) {
 			A2(_elm_lang$core$Basics_ops['++'], _user$project$Main$baseUrl, '/patient-by-contacted-source'),
 			body));
 };
-var _user$project$Main$medicMePageMIDCmd = function (mid) {
+var _user$project$Main$medicByMIDCmd = function (mid) {
 	var body = _evancz$elm_http$Http$string(
 		A2(
 			_elm_lang$core$Json_Encode$encode,
@@ -1418,27 +1374,7 @@ var _user$project$Main$medicsToDoCmd = function (mid) {
 			A2(_elm_lang$core$Basics_ops['++'], _user$project$Main$baseUrl, '/medic-todo'),
 			body));
 };
-var _user$project$Main$medicMePageCmd = function (mid) {
-	return _elm_lang$core$Platform_Cmd$batch(
-		_elm_lang$core$Native_List.fromArray(
-			[
-				_user$project$Main$medicMePageMIDCmd(mid),
-				_user$project$Main$medicContactedCmd(mid),
-				_user$project$Main$medicsToDoCmd(mid)
-			]));
-};
-var _user$project$Main$mePage = function (model) {
-	var _p24 = model.loginStatus;
-	switch (_p24.ctor) {
-		case 'Public':
-			return _elm_lang$core$Platform_Cmd$none;
-		case 'PatientLoggedIn':
-			return _elm_lang$core$Platform_Cmd$none;
-		default:
-			return _user$project$Main$medicMePageCmd(_p24._0);
-	}
-};
-var _user$project$Main$patientMePagePIDCmd = function (pid) {
+var _user$project$Main$patientByPIDCmd = function (pid) {
 	var body = _evancz$elm_http$Http$string(
 		A2(
 			_elm_lang$core$Json_Encode$encode,
@@ -1466,6 +1402,27 @@ var _user$project$Main$patientMePagePIDCmd = function (pid) {
 			_user$project$Main$patientDecoder,
 			A2(_elm_lang$core$Basics_ops['++'], _user$project$Main$baseUrl, '/patient-me'),
 			body));
+};
+var _user$project$Main$mePage = function (model) {
+	var _p23 = model.loginStatus;
+	switch (_p23.ctor) {
+		case 'Public':
+			return _elm_lang$core$Platform_Cmd$none;
+		case 'PatientLoggedIn':
+			return _user$project$Main$patientByPIDCmd(_p23._0);
+		default:
+			var _p24 = _p23._0;
+			return _elm_lang$core$Platform_Cmd$batch(
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_user$project$Main$medicByMIDCmd(_p24),
+						_user$project$Main$medicContactedCmd(_p24),
+						_user$project$Main$medicsToDoCmd(_p24)
+					]));
+	}
+};
+var _user$project$Main$patientMePageCmd = function (pid) {
+	return _user$project$Main$patientByPIDCmd(pid);
 };
 var _user$project$Main$HospitalTableSucceed = function (a) {
 	return {ctor: 'HospitalTableSucceed', _0: a};

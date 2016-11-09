@@ -681,24 +681,19 @@ mePage model =
             Cmd.none
 
         PatientLoggedIn pid ->
-            Cmd.none
+            patientByPIDCmd pid
 
         -- patientMePageCmd pid
         MedicLoggedIn mid ->
-            medicMePageCmd mid
+            Cmd.batch
+                [ medicByMIDCmd mid
+                , medicContactedCmd mid
+                , medicsToDoCmd mid
+                ]
 
 
-medicMePageCmd : Int -> Cmd Msg
-medicMePageCmd mid =
-    Cmd.batch
-        [ medicMePageMIDCmd mid
-        , medicContactedCmd mid
-        , medicsToDoCmd mid
-        ]
-
-
-medicMePageMIDCmd : Int -> Cmd Msg
-medicMePageMIDCmd mid =
+medicByMIDCmd : Int -> Cmd Msg
+medicByMIDCmd mid =
     {- Get a single medic's row from medic -}
     let
         body =
@@ -739,11 +734,11 @@ medicsToDoCmd mid =
 
 patientMePageCmd : Int -> Cmd Msg
 patientMePageCmd pid =
-    patientMePageCmd pid
+    patientByPIDCmd pid
 
 
-patientMePagePIDCmd : Int -> Cmd Msg
-patientMePagePIDCmd pid =
+patientByPIDCmd : Int -> Cmd Msg
+patientByPIDCmd pid =
     {- Get a single patient's row from patient -}
     let
         body =
@@ -854,18 +849,7 @@ view model =
                         ]
 
                 MyInfoPage ->
-                    case model.loginStatus of
-                        Public ->
-                            div [] [ text "Please login to view your information." ]
-
-                        PatientLoggedIn pid ->
-                            div [] [ text ("You are logged in as patient " ++ (toString pid)) ]
-
-                        MedicLoggedIn mid ->
-                            div []
-                                [ text ("You are logged in as medic " ++ (toString mid))
-                                , viewMyInfo model
-                                ]
+                    viewMyInfo model
             , googleMap
                 [ attribute "latitude" "40.793575"
                 , attribute "longitude" "-73.950564"
@@ -950,7 +934,13 @@ viewTable header searchable tbl objects =
                 (objects
                     |> List.indexedMap
                         (\ind obj ->
-                            tr [ onClick (rowMsg tbl.name ind) ]
+                            tr
+                                [ (if searchable then
+                                    onClick (rowMsg tbl.name ind)
+                                   else
+                                    class ""
+                                  )
+                                ]
                                 (List.map
                                     (\( colName, getter ) ->
                                         td [] [ text (getter obj) ]
@@ -1052,7 +1042,7 @@ viewMyInfo model =
                     ]
 
         NoMePage ->
-            div [] []
+            div [] [ text "Please login to view your information." ]
 
 
 scriptWebComponents : Html a
