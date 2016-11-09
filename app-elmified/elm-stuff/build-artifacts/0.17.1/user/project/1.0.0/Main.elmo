@@ -882,6 +882,14 @@ var _user$project$Main$viewMyInfo = function (model) {
 										}),
 									_elm_lang$core$Native_List.fromArray(
 										[_p12._0])))
+							])),
+						A2(
+						_elm_lang$html$Html$p,
+						_elm_lang$core$Native_List.fromArray(
+							[]),
+						_elm_lang$core$Native_List.fromArray(
+							[
+								A4(_user$project$Main$viewTable, 'Your Symptoms', false, _user$project$Main$symptomTable, model.symptoms)
 							]))
 					]));
 		default:
@@ -901,8 +909,8 @@ var _user$project$Main$PatientMePageSucceed = function (a) {
 var _user$project$Main$MedicMePageSucceed = function (a) {
 	return {ctor: 'MedicMePageSucceed', _0: a};
 };
-var _user$project$Main$SymptomByDiseaseSucceed = function (a) {
-	return {ctor: 'SymptomByDiseaseSucceed', _0: a};
+var _user$project$Main$SymptomSucceed = function (a) {
+	return {ctor: 'SymptomSucceed', _0: a};
 };
 var _user$project$Main$DiseaseTableSucceed = function (a) {
 	return {ctor: 'DiseaseTableSucceed', _0: a};
@@ -1222,7 +1230,7 @@ var _user$project$Main$sympByDiseaseCmd = function (virusName) {
 	return A3(
 		_elm_lang$core$Task$perform,
 		_user$project$Main$RequestFail,
-		_user$project$Main$SymptomByDiseaseSucceed,
+		_user$project$Main$SymptomSucceed,
 		A3(
 			_user$project$Main$post$,
 			_elm_lang$core$Json_Decode$list(_user$project$Main$symptomDecoder),
@@ -1403,26 +1411,58 @@ var _user$project$Main$patientByPIDCmd = function (pid) {
 			A2(_elm_lang$core$Basics_ops['++'], _user$project$Main$baseUrl, '/patient-me'),
 			body));
 };
+var _user$project$Main$patientExhibitsCmd = function (pid) {
+	var body = _evancz$elm_http$Http$string(
+		A2(
+			_elm_lang$core$Json_Encode$encode,
+			1,
+			_elm_lang$core$Json_Encode$object(
+				_elm_lang$core$Native_List.fromArray(
+					[
+						{
+						ctor: '_Tuple2',
+						_0: 'pid',
+						_1: _elm_lang$core$Json_Encode$int(pid)
+					},
+						{
+						ctor: '_Tuple2',
+						_0: 'columns',
+						_1: _user$project$Main$encodeCols(_user$project$Main$symptomTable.columns)
+					}
+					]))));
+	return A3(
+		_elm_lang$core$Task$perform,
+		_user$project$Main$RequestFail,
+		_user$project$Main$SymptomSucceed,
+		A3(
+			_user$project$Main$post$,
+			_elm_lang$core$Json_Decode$list(_user$project$Main$symptomDecoder),
+			A2(_elm_lang$core$Basics_ops['++'], _user$project$Main$baseUrl, '/patient-exhibits'),
+			body));
+};
 var _user$project$Main$mePage = function (model) {
 	var _p23 = model.loginStatus;
 	switch (_p23.ctor) {
 		case 'Public':
 			return _elm_lang$core$Platform_Cmd$none;
 		case 'PatientLoggedIn':
-			return _user$project$Main$patientByPIDCmd(_p23._0);
-		default:
 			var _p24 = _p23._0;
 			return _elm_lang$core$Platform_Cmd$batch(
 				_elm_lang$core$Native_List.fromArray(
 					[
-						_user$project$Main$medicByMIDCmd(_p24),
-						_user$project$Main$medicContactedCmd(_p24),
-						_user$project$Main$medicsToDoCmd(_p24)
+						_user$project$Main$patientByPIDCmd(_p24),
+						_user$project$Main$patientExhibitsCmd(_p24)
+					]));
+		default:
+			var _p25 = _p23._0;
+			return _elm_lang$core$Platform_Cmd$batch(
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_user$project$Main$medicByMIDCmd(_p25),
+						_user$project$Main$medicContactedCmd(_p25),
+						_user$project$Main$medicsToDoCmd(_p25)
 					]));
 	}
-};
-var _user$project$Main$patientMePageCmd = function (pid) {
-	return _user$project$Main$patientByPIDCmd(pid);
 };
 var _user$project$Main$HospitalTableSucceed = function (a) {
 	return {ctor: 'HospitalTableSucceed', _0: a};
@@ -1443,20 +1483,20 @@ var _user$project$Main$queryHospitalFieldsCmd = function (model) {
 };
 var _user$project$Main$update = F2(
 	function (msg, model) {
-		var _p25 = A2(
+		var _p26 = A2(
 			_elm_lang$core$Debug$log,
 			'update: ',
 			{ctor: '_Tuple3', _0: msg, _1: model.mode, _2: model.loginStatus});
 		var result = function () {
-			var _p26 = msg;
-			switch (_p26.ctor) {
+			var _p27 = msg;
+			switch (_p27.ctor) {
 				case 'HospitalTableSucceed':
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{
-								hospitals: _p26._0,
+								hospitals: _p27._0,
 								fields: _user$project$Main$tableFields(_user$project$Main$hospitalTable)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
@@ -1467,7 +1507,7 @@ var _user$project$Main$update = F2(
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{
-								patients: _p26._0,
+								patients: _p27._0,
 								fields: _user$project$Main$tableFields(_user$project$Main$patientTable)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
@@ -1478,7 +1518,7 @@ var _user$project$Main$update = F2(
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{
-								otherPatients: _p26._0,
+								otherPatients: _p27._0,
 								fields: _user$project$Main$tableFields(_user$project$Main$patientTable)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
@@ -1489,17 +1529,17 @@ var _user$project$Main$update = F2(
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{
-								diseases: _p26._0,
+								diseases: _p27._0,
 								fields: _user$project$Main$tableFields(_user$project$Main$diseaseTable)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
-				case 'SymptomByDiseaseSucceed':
+				case 'SymptomSucceed':
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{symptoms: _p26._0}),
+							{symptoms: _p27._0}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				case 'MedicMePageSucceed':
@@ -1508,7 +1548,7 @@ var _user$project$Main$update = F2(
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{
-								mePage: _user$project$Main$MePageMedic(_p26._0)
+								mePage: _user$project$Main$MePageMedic(_p27._0)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
@@ -1518,18 +1558,18 @@ var _user$project$Main$update = F2(
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{
-								mePage: _user$project$Main$MePagePatient(_p26._0)
+								mePage: _user$project$Main$MePagePatient(_p27._0)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				case 'RequestFail':
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				case 'MenuAct':
-					var _p28 = _p26._0._0;
+					var _p29 = _p27._0._0;
 					var newMode = _user$project$Menu$update(
-						_user$project$Menu$Select(_p28));
-					var _p27 = _p28;
-					switch (_p27.ctor) {
+						_user$project$Menu$Select(_p29));
+					var _p28 = _p29;
+					switch (_p28.ctor) {
 						case 'HospitalPage':
 							return {
 								ctor: '_Tuple2',
@@ -1569,7 +1609,7 @@ var _user$project$Main$update = F2(
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{
-								loginNumberModel: A2(_abadi199$elm_input_extra$Input_Number$update, _p26._0, model.loginNumberModel)
+								loginNumberModel: A2(_abadi199$elm_input_extra$Input_Number$update, _p27._0, model.loginNumberModel)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
@@ -1586,8 +1626,8 @@ var _user$project$Main$update = F2(
 						_1: _user$project$Main$validateMidCmd(model.loginNumberModel.value)
 					};
 				case 'PIDLoginSuccess':
-					var _p29 = _p26._0;
-					if (_p29 === true) {
+					var _p30 = _p27._0;
+					if (_p30 === true) {
 						return {
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
@@ -1605,8 +1645,8 @@ var _user$project$Main$update = F2(
 						return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 					}
 				case 'MIDLoginSuccess':
-					var _p30 = _p26._0;
-					if (_p30 === true) {
+					var _p31 = _p27._0;
+					if (_p31 === true) {
 						return {
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
@@ -1629,13 +1669,13 @@ var _user$project$Main$update = F2(
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{
-								fields: A3(_user$project$Main$updateField, _p26._0, _p26._1, model.fields)
+								fields: A3(_user$project$Main$updateField, _p27._0, _p27._1, model.fields)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				case 'FieldSearch':
-					var _p31 = model.mode;
-					switch (_p31.ctor) {
+					var _p32 = model.mode;
+					switch (_p32.ctor) {
 						case 'HospitalPage':
 							return {
 								ctor: '_Tuple2',
@@ -1664,21 +1704,21 @@ var _user$project$Main$update = F2(
 						ctor: '_Tuple2',
 						_0: model,
 						_1: _user$project$Main$diseaseByHospitalCmd(
-							A3(_user$project$Main$primaryKey, model, _p26._0, _p26._1))
+							A3(_user$project$Main$primaryKey, model, _p27._0, _p27._1))
 					};
 				case 'SymptomByDisease':
 					return {
 						ctor: '_Tuple2',
 						_0: model,
 						_1: _user$project$Main$sympByDiseaseCmd(
-							A3(_user$project$Main$primaryKey, model, _p26._0, _p26._1))
+							A3(_user$project$Main$primaryKey, model, _p27._0, _p27._1))
 					};
 				default:
 					return {
 						ctor: '_Tuple2',
 						_0: model,
 						_1: _user$project$Main$patientByContactedSourceCmd(
-							A3(_user$project$Main$primaryKey, model, _p26._0, _p26._1))
+							A3(_user$project$Main$primaryKey, model, _p27._0, _p27._1))
 					};
 			}
 		}();
@@ -1690,7 +1730,7 @@ var _user$project$Main$main = {
 			init: _user$project$Main$init,
 			view: _user$project$Main$view,
 			update: _user$project$Main$update,
-			subscriptions: function (_p32) {
+			subscriptions: function (_p33) {
 				return _elm_lang$core$Platform_Sub$none;
 			}
 		})

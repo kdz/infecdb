@@ -229,27 +229,6 @@ def query_medic_me_page():
 
 
 
-@app.route('/patient-me', methods=['GET', 'POST'])
-def query_patient_me_page():
-    """ Returns a single medic row using specified mid. """
-
-    log("starting query_patient_me_page", "")
-
-    pid = request.json['pid']
-    cols = request.json['columns']
-
-    query_str = "SELECT * FROM patient WHERE pid=%s" % pid
-
-
-    mid_cursor = g.conn.execute(query_str)
-    patient = [row_to_dict(row, cols) for row in mid_cursor][0]
-
-    log("completed query_patient_me_page", "")
-
-    return jsonify(patient)
-
-
-
 @app.route('/medic-checks-on', methods=['GET', 'POST'])
 def query_medic_checks_on():
     """ Returns a single medic row using specified mid. """
@@ -322,6 +301,52 @@ def query_medic_todo():
     log("completed medic-todo", "")
 
     return jsonify(patients)
+
+
+@app.route('/patient-me', methods=['GET', 'POST'])
+def query_patient_me_page():
+    """ Returns a single medic row using specified mid. """
+
+    log("starting query_patient_me_page", "")
+
+    pid = request.json['pid']
+    cols = request.json['columns']
+
+    query_str = "SELECT * FROM patient WHERE pid=%s" % pid
+
+
+    mid_cursor = g.conn.execute(query_str)
+    patient = [row_to_dict(row, cols) for row in mid_cursor][0]
+
+    log("completed query_patient_me_page", "")
+
+    return jsonify(patient)
+
+
+
+@app.route('/patient-exhibits', methods=['GET', 'POST'])
+def query_symptoms_by_patient():
+    """ Returns a single medic row using specified mid. """
+
+    log("starting query_symptoms_by_patient", "")
+
+    pid = request.json['pid']
+    cols = request.json['columns']
+
+    query_str = "SELECT " + ",".join(["s." + col for col in cols]) + " " + \
+                "FROM patient p LEFT OUTER JOIN exhibits e ON p.pid=e.pid, symptom s " + \
+                "WHERE p.pid=%s AND s.symptom_name=e.symptom_name" % pid
+
+
+    mid_cursor = g.conn.execute(query_str)
+    symptoms = [row_to_dict(row, cols) for row in mid_cursor]
+
+    log("completed query_symptoms_by_patient", "")
+
+    return jsonify(symptoms)
+
+
+
 
 
 # @app.route('/?', methods=['GET', 'POST'])

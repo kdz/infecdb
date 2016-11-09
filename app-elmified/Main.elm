@@ -253,7 +253,7 @@ type Msg
     | PatientTableSucceed (List Patient)
     | OtherPatientTableSucceed (List Patient)
     | DiseaseTableSucceed (List Disease)
-    | SymptomByDiseaseSucceed (List Symptom)
+    | SymptomSucceed (List Symptom)
     | MedicMePageSucceed Medic
     | PatientMePageSucceed Patient
     | UpdateFieldInput String String
@@ -301,7 +301,7 @@ update msg model =
                     , Cmd.none
                     )
 
-                SymptomByDiseaseSucceed incomingSymptoms ->
+                SymptomSucceed incomingSymptoms ->
                     ( { model | symptoms = incomingSymptoms }, Cmd.none )
 
                 MedicMePageSucceed medicInfo ->
@@ -637,7 +637,7 @@ sympByDiseaseCmd virusName =
                 |> Http.string
     in
         (post' (Decode.list symptomDecoder) (baseUrl ++ "/symptom-by-disease") body)
-            |> Task.perform RequestFail SymptomByDiseaseSucceed
+            |> Task.perform RequestFail SymptomSucceed
 
 
 diseaseByHospitalCmd : String -> Cmd Msg
@@ -681,7 +681,10 @@ mePage model =
             Cmd.none
 
         PatientLoggedIn pid ->
-            patientByPIDCmd pid
+            Cmd.batch
+                [ patientByPIDCmd pid
+                , patientExhibitsCmd pid
+                ]
 
         -- patientMePageCmd pid
         MedicLoggedIn mid ->
@@ -732,11 +735,6 @@ medicsToDoCmd mid =
             |> Task.perform RequestFail OtherPatientTableSucceed
 
 
-patientMePageCmd : Int -> Cmd Msg
-patientMePageCmd pid =
-    patientByPIDCmd pid
-
-
 patientByPIDCmd : Int -> Cmd Msg
 patientByPIDCmd pid =
     {- Get a single patient's row from patient -}
@@ -749,6 +747,19 @@ patientByPIDCmd pid =
     in
         (post' patientDecoder (baseUrl ++ "/patient-me") body)
             |> Task.perform RequestFail PatientMePageSucceed
+
+
+patientExhibitsCmd : Int -> Cmd Msg
+patientExhibitsCmd pid =
+    let
+        body =
+            [ ( "pid", Encode.int pid ), ( "columns", encodeCols symptomTable.columns ) ]
+                |> Encode.object
+                |> Encode.encode 1
+                |> Http.string
+    in
+        (post' (Decode.list symptomDecoder) (baseUrl ++ "/patient-exhibits") body)
+            |> Task.perform RequestFail SymptomSucceed
 
 
 
@@ -1033,9 +1044,9 @@ viewMyInfo model =
                                     )
                             )
                         ]
-                      -- , p []
-                      --     [ viewTable "Your Patients" False patientTable model.patients
-                      --     ]
+                    , Html.p []
+                        [ viewTable "Your Symptoms" False symptomTable model.symptoms
+                        ]
                       -- , p []
                       --     [ viewTable "Today's todo list" False patientTable model.otherPatients
                       -- ]
