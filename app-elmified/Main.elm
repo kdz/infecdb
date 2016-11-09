@@ -436,7 +436,7 @@ updateField field val oldFields =
 
 baseUrl : String
 baseUrl =
-    "http://40.121.55.50:8111"
+    "http://localhost:8111"
 
 
 

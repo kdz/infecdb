@@ -3,12 +3,15 @@ from flask import jsonify, redirect, url_for, escape
 from flask import request, session
 from cloud_connect import w4111_engine
 from flask import g
+from flask_cors import CORS, cross_origin
+
 import sys
 
 
 # Setup app
 
 app = Flask(__name__, static_url_path='')
+CORS(app)
 app.model = 0
 
 
@@ -40,11 +43,13 @@ def teardown_request(exception):
 
 # Initial index.html request
 @app.route('/<path:path>')
+@cross_origin()
 def static_proxy(path):
     return app.send_static_file(path)
 
 
 @app.route('/')
+@cross_origin()
 def index():
     """ Initial page load. """
     enter("index", request.args)
@@ -63,6 +68,7 @@ def row_to_dict(row, cols):
     return result
 
 @app.route('/api', methods=['GET', 'POST'])
+@cross_origin()
 def api():
     blob = request.get_json()
     # app.model = update(blob, app.model)
@@ -73,6 +79,7 @@ def api():
 
 
 @app.route('/get-table', methods=['GET', 'POST'])
+@cross_origin()
 def query_get_table():
 
     log("starting query_get_table", "")
@@ -90,6 +97,7 @@ def query_get_table():
 
 
 @app.route('/query-fields', methods=['GET', 'POST'])
+@cross_origin()
 def query_fields():
 
     log("starting query_fields", "")
@@ -114,6 +122,7 @@ def query_fields():
 
 
 @app.route('/symptom-by-disease', methods=['GET', 'POST'])
+@cross_origin()
 def query_symptom_by_disease():
 
     log("starting symptom-by-disease", "")
@@ -135,6 +144,7 @@ def query_symptom_by_disease():
 
 
 @app.route('/disease-by-hospital', methods=['GET', 'POST'])
+@cross_origin()
 def query_disease_by_hospital():
 
     log("starting query_disease_by_hospital", "")
@@ -158,6 +168,7 @@ def query_disease_by_hospital():
 
 
 @app.route('/patient-by-contacted-source', methods=['GET', 'POST'])
+@cross_origin()
 def query_patient_by_contact_source():
     """ Query for patients exposed to given pid of source patient. """
 
@@ -182,6 +193,7 @@ def query_patient_by_contact_source():
 
 
 @app.route('/pid-login/<pid>', methods=['GET', 'POST'])
+@cross_origin()
 def validate_pid(pid):
 
     log("starting validate_pid", pid)
@@ -195,6 +207,7 @@ def validate_pid(pid):
 
 
 @app.route('/mid-login/<mid>', methods=['GET', 'POST'])
+@cross_origin()
 def validate_mid(mid):
 
     log("starting validate_mid", mid)
@@ -209,6 +222,7 @@ def validate_mid(mid):
 
 
 @app.route('/medic-me', methods=['GET', 'POST'])
+@cross_origin()
 def query_medic_me_page():
     """ Returns a single medic row using specified mid. """
 
@@ -230,6 +244,7 @@ def query_medic_me_page():
 
 
 @app.route('/medic-checks-on', methods=['GET', 'POST'])
+@cross_origin()
 def query_medic_checks_on():
     """ Returns a single medic row using specified mid. """
 
@@ -254,6 +269,7 @@ def query_medic_checks_on():
 
 
 @app.route('/medic-todo', methods=['GET', 'POST'])
+@cross_origin()
 def query_medic_todo():
     """ Returns a single medic row using specified mid. """
 
@@ -304,6 +320,7 @@ def query_medic_todo():
 
 
 @app.route('/patient-me', methods=['GET', 'POST'])
+@cross_origin()
 def query_patient_me_page():
     """ Returns a single medic row using specified mid. """
 
@@ -325,6 +342,7 @@ def query_patient_me_page():
 
 
 @app.route('/patient-exhibits', methods=['GET', 'POST'])
+@cross_origin()
 def query_symptoms_by_patient():
 
     log("starting query_symptoms_by_patient", "")
@@ -346,6 +364,7 @@ def query_symptoms_by_patient():
 
 
 @app.route('/patient-has', methods=['GET', 'POST'])
+@cross_origin()
 def query_patient_has():
 
     log("starting query_patient_has", "")
@@ -368,6 +387,7 @@ def query_patient_has():
 
 
 @app.route('/patient-medic', methods=['GET', 'POST'])
+@cross_origin()
 def query_patient_medic():
 
     log("starting query_patient_medic", "")
@@ -426,4 +446,4 @@ def log(msg, x):
 # Run app
 
 if __name__ == "__main__":
-    app.run(debug=True, port=8111, host='40.121.55.50')
+    app.run(debug=True, port=8111)
