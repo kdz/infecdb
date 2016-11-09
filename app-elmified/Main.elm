@@ -42,6 +42,7 @@ type alias Model =
     , otherPatients : List Patient
     , diseases : List Disease
     , symptoms : List Symptom
+    , medics : List Medic
     , mePage : MePage
     , mode : Mode
     , loginStatus : Status
@@ -58,6 +59,7 @@ initModel =
     , otherPatients = []
     , diseases = []
     , symptoms = []
+    , medics = []
     , mePage = NoMePage
     , mode = HospitalPage
     , loginStatus = Public
@@ -254,6 +256,7 @@ type Msg
     | OtherPatientTableSucceed (List Patient)
     | DiseaseTableSucceed (List Disease)
     | SymptomSucceed (List Symptom)
+    | MedicTableSucceed (List Medic)
     | MedicMePageSucceed Medic
     | PatientMePageSucceed Patient
     | UpdateFieldInput String String
@@ -297,6 +300,14 @@ update msg model =
                     ( { model
                         | diseases = incomingDiseases
                         , fields = tableFields diseaseTable
+                      }
+                    , Cmd.none
+                    )
+
+                MedicTableSucceed incomingMedics ->
+                    ( { model
+                        | medics = incomingMedics
+                        , fields = tableFields medicTable
                       }
                     , Cmd.none
                     )
@@ -685,6 +696,7 @@ mePage model =
                 [ patientByPIDCmd pid
                 , patientExhibitsCmd pid
                 , patientHasCmd pid
+                , patientMedicCmd pid
                 ]
 
         -- patientMePageCmd pid
@@ -706,7 +718,7 @@ medicByMIDCmd mid =
                 |> Encode.encode 1
                 |> Http.string
     in
-        (post' medicMePageDecoder (baseUrl ++ "/medic-me") body)
+        (post' medicDecoder (baseUrl ++ "/medic-me") body)
             |> Task.perform RequestFail MedicMePageSucceed
 
 
@@ -776,6 +788,19 @@ patientHasCmd pid =
             |> Task.perform RequestFail DiseaseTableSucceed
 
 
+patientMedicCmd : Int -> Cmd Msg
+patientMedicCmd pid =
+    let
+        body =
+            [ ( "pid", Encode.int pid ), ( "columns", encodeCols medicTable.columns ) ]
+                |> Encode.object
+                |> Encode.encode 1
+                |> Http.string
+    in
+        (post' (Decode.list medicDecoder) (baseUrl ++ "/patient-medic") body)
+            |> Task.perform RequestFail MedicTableSucceed
+
+
 
 -- DECODERS
 
@@ -817,8 +842,8 @@ symptomDecoder =
         |> required "description" string
 
 
-medicMePageDecoder : Decode.Decoder Medic
-medicMePageDecoder =
+medicDecoder : Decode.Decoder Medic
+medicDecoder =
     decode Medic
         |> required "mid" string
         |> required "name" string
@@ -1057,6 +1082,9 @@ viewMyInfo model =
                                             )
                                     )
                             )
+                        ]
+                    , Html.p []
+                        [ viewTable "Your Doctor" False medicTable model.medics
                         ]
                     , Html.p []
                         [ viewTable "Your Symptoms" False symptomTable model.symptoms

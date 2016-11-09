@@ -85,8 +85,8 @@ var _user$project$Main$primaryKey = F3(
 					return _elm_lang$core$Native_Utils.crash(
 						'Main',
 						{
-							start: {line: 627, column: 9},
-							end: {line: 627, column: 20}
+							start: {line: 638, column: 9},
+							end: {line: 638, column: 20}
 						})('Could not find table key');
 				}
 			}
@@ -356,7 +356,9 @@ var _user$project$Main$Model = function (a) {
 								return function (i) {
 									return function (j) {
 										return function (k) {
-											return {hospitals: a, patients: b, otherPatients: c, diseases: d, symptoms: e, mePage: f, mode: g, loginStatus: h, loginNumberModel: i, loginNumberOptions: j, fields: k};
+											return function (l) {
+												return {hospitals: a, patients: b, otherPatients: c, diseases: d, symptoms: e, medics: f, mePage: g, mode: h, loginStatus: i, loginNumberModel: j, loginNumberOptions: k, fields: l};
+											};
 										};
 									};
 								};
@@ -477,7 +479,7 @@ var _user$project$Main$Medic = F6(
 	function (a, b, c, d, e, f) {
 		return {mid: a, name: b, phoneNumber: c, hospitalName: d, latitude: e, longitude: f};
 	});
-var _user$project$Main$medicMePageDecoder = A3(
+var _user$project$Main$medicDecoder = A3(
 	_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$required,
 	'longitude',
 	_elm_lang$core$Json_Decode$string,
@@ -531,6 +533,8 @@ var _user$project$Main$initModel = {
 	diseases: _elm_lang$core$Native_List.fromArray(
 		[]),
 	symptoms: _elm_lang$core$Native_List.fromArray(
+		[]),
+	medics: _elm_lang$core$Native_List.fromArray(
 		[]),
 	mePage: _user$project$Main$NoMePage,
 	mode: _user$project$Main$HospitalPage,
@@ -889,6 +893,14 @@ var _user$project$Main$viewMyInfo = function (model) {
 							[]),
 						_elm_lang$core$Native_List.fromArray(
 							[
+								A4(_user$project$Main$viewTable, 'Your Doctor', false, _user$project$Main$medicTable, model.medics)
+							])),
+						A2(
+						_elm_lang$html$Html$p,
+						_elm_lang$core$Native_List.fromArray(
+							[]),
+						_elm_lang$core$Native_List.fromArray(
+							[
 								A4(_user$project$Main$viewTable, 'Your Symptoms', false, _user$project$Main$symptomTable, model.symptoms)
 							])),
 						A2(
@@ -916,6 +928,9 @@ var _user$project$Main$PatientMePageSucceed = function (a) {
 };
 var _user$project$Main$MedicMePageSucceed = function (a) {
 	return {ctor: 'MedicMePageSucceed', _0: a};
+};
+var _user$project$Main$MedicTableSucceed = function (a) {
+	return {ctor: 'MedicTableSucceed', _0: a};
 };
 var _user$project$Main$SymptomSucceed = function (a) {
 	return {ctor: 'SymptomSucceed', _0: a};
@@ -1328,7 +1343,7 @@ var _user$project$Main$medicByMIDCmd = function (mid) {
 		_user$project$Main$MedicMePageSucceed,
 		A3(
 			_user$project$Main$post$,
-			_user$project$Main$medicMePageDecoder,
+			_user$project$Main$medicDecoder,
 			A2(_elm_lang$core$Basics_ops['++'], _user$project$Main$baseUrl, '/medic-me'),
 			body));
 };
@@ -1477,6 +1492,35 @@ var _user$project$Main$patientHasCmd = function (pid) {
 			A2(_elm_lang$core$Basics_ops['++'], _user$project$Main$baseUrl, '/patient-has'),
 			body));
 };
+var _user$project$Main$patientMedicCmd = function (pid) {
+	var body = _evancz$elm_http$Http$string(
+		A2(
+			_elm_lang$core$Json_Encode$encode,
+			1,
+			_elm_lang$core$Json_Encode$object(
+				_elm_lang$core$Native_List.fromArray(
+					[
+						{
+						ctor: '_Tuple2',
+						_0: 'pid',
+						_1: _elm_lang$core$Json_Encode$int(pid)
+					},
+						{
+						ctor: '_Tuple2',
+						_0: 'columns',
+						_1: _user$project$Main$encodeCols(_user$project$Main$medicTable.columns)
+					}
+					]))));
+	return A3(
+		_elm_lang$core$Task$perform,
+		_user$project$Main$RequestFail,
+		_user$project$Main$MedicTableSucceed,
+		A3(
+			_user$project$Main$post$,
+			_elm_lang$core$Json_Decode$list(_user$project$Main$medicDecoder),
+			A2(_elm_lang$core$Basics_ops['++'], _user$project$Main$baseUrl, '/patient-medic'),
+			body));
+};
 var _user$project$Main$mePage = function (model) {
 	var _p23 = model.loginStatus;
 	switch (_p23.ctor) {
@@ -1489,7 +1533,8 @@ var _user$project$Main$mePage = function (model) {
 					[
 						_user$project$Main$patientByPIDCmd(_p24),
 						_user$project$Main$patientExhibitsCmd(_p24),
-						_user$project$Main$patientHasCmd(_p24)
+						_user$project$Main$patientHasCmd(_p24),
+						_user$project$Main$patientMedicCmd(_p24)
 					]));
 		default:
 			var _p25 = _p23._0;
@@ -1569,6 +1614,17 @@ var _user$project$Main$update = F2(
 							{
 								diseases: _p27._0,
 								fields: _user$project$Main$tableFields(_user$project$Main$diseaseTable)
+							}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				case 'MedicTableSucceed':
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{
+								medics: _p27._0,
+								fields: _user$project$Main$tableFields(_user$project$Main$medicTable)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};

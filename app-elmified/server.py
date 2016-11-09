@@ -359,11 +359,33 @@ def query_patient_has():
 
 
     mid_cursor = g.conn.execute(query_str)
-    symptoms = [row_to_dict(row, cols) for row in mid_cursor]
+    diseases = [row_to_dict(row, cols) for row in mid_cursor]
 
     log("completed query_patient_has", "")
 
-    return jsonify(symptoms)
+    return jsonify(diseases)
+
+
+
+@app.route('/patient-medic', methods=['GET', 'POST'])
+def query_patient_medic():
+
+    log("starting query_patient_medic", "")
+
+    pid = request.json['pid']
+    cols = request.json['columns']
+
+    query_str = "SELECT " + ",".join(["m." + col for col in cols]) + " " + \
+                "FROM patient p LEFT OUTER JOIN checks_on c ON p.pid=c.pid, medic m " + \
+                "WHERE p.pid=%s AND c.mid=m.mid" % pid
+
+
+    mid_cursor = g.conn.execute(query_str)
+    medic = [row_to_dict(row, cols) for row in mid_cursor]
+
+    log("completed query_patient_has", "")
+
+    return jsonify(medic)
 
 
 # @app.route('/?', methods=['GET', 'POST'])
