@@ -890,6 +890,14 @@ var _user$project$Main$viewMyInfo = function (model) {
 						_elm_lang$core$Native_List.fromArray(
 							[
 								A4(_user$project$Main$viewTable, 'Your Symptoms', false, _user$project$Main$symptomTable, model.symptoms)
+							])),
+						A2(
+						_elm_lang$html$Html$p,
+						_elm_lang$core$Native_List.fromArray(
+							[]),
+						_elm_lang$core$Native_List.fromArray(
+							[
+								A4(_user$project$Main$viewTable, 'Your Disease Diagnosis', false, _user$project$Main$diseaseTable, model.diseases)
 							]))
 					]));
 		default:
@@ -1440,6 +1448,35 @@ var _user$project$Main$patientExhibitsCmd = function (pid) {
 			A2(_elm_lang$core$Basics_ops['++'], _user$project$Main$baseUrl, '/patient-exhibits'),
 			body));
 };
+var _user$project$Main$patientHasCmd = function (pid) {
+	var body = _evancz$elm_http$Http$string(
+		A2(
+			_elm_lang$core$Json_Encode$encode,
+			1,
+			_elm_lang$core$Json_Encode$object(
+				_elm_lang$core$Native_List.fromArray(
+					[
+						{
+						ctor: '_Tuple2',
+						_0: 'pid',
+						_1: _elm_lang$core$Json_Encode$int(pid)
+					},
+						{
+						ctor: '_Tuple2',
+						_0: 'columns',
+						_1: _user$project$Main$encodeCols(_user$project$Main$diseaseTable.columns)
+					}
+					]))));
+	return A3(
+		_elm_lang$core$Task$perform,
+		_user$project$Main$RequestFail,
+		_user$project$Main$DiseaseTableSucceed,
+		A3(
+			_user$project$Main$post$,
+			_elm_lang$core$Json_Decode$list(_user$project$Main$diseaseDecoder),
+			A2(_elm_lang$core$Basics_ops['++'], _user$project$Main$baseUrl, '/patient-has'),
+			body));
+};
 var _user$project$Main$mePage = function (model) {
 	var _p23 = model.loginStatus;
 	switch (_p23.ctor) {
@@ -1451,7 +1488,8 @@ var _user$project$Main$mePage = function (model) {
 				_elm_lang$core$Native_List.fromArray(
 					[
 						_user$project$Main$patientByPIDCmd(_p24),
-						_user$project$Main$patientExhibitsCmd(_p24)
+						_user$project$Main$patientExhibitsCmd(_p24),
+						_user$project$Main$patientHasCmd(_p24)
 					]));
 		default:
 			var _p25 = _p23._0;

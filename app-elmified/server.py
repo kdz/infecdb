@@ -326,7 +326,6 @@ def query_patient_me_page():
 
 @app.route('/patient-exhibits', methods=['GET', 'POST'])
 def query_symptoms_by_patient():
-    """ Returns a single medic row using specified mid. """
 
     log("starting query_symptoms_by_patient", "")
 
@@ -346,7 +345,25 @@ def query_symptoms_by_patient():
     return jsonify(symptoms)
 
 
+@app.route('/patient-has', methods=['GET', 'POST'])
+def query_patient_has():
 
+    log("starting query_patient_has", "")
+
+    pid = request.json['pid']
+    cols = request.json['columns']
+
+    query_str = "SELECT " + ",".join(["d." + col for col in cols]) + " " + \
+                "FROM patient p LEFT OUTER JOIN has ON p.pid=has.pid, disease d " + \
+                "WHERE p.pid=%s AND d.virus_name=has.virus_name" % pid
+
+
+    mid_cursor = g.conn.execute(query_str)
+    symptoms = [row_to_dict(row, cols) for row in mid_cursor]
+
+    log("completed query_patient_has", "")
+
+    return jsonify(symptoms)
 
 
 # @app.route('/?', methods=['GET', 'POST'])

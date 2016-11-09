@@ -684,6 +684,7 @@ mePage model =
             Cmd.batch
                 [ patientByPIDCmd pid
                 , patientExhibitsCmd pid
+                , patientHasCmd pid
                 ]
 
         -- patientMePageCmd pid
@@ -760,6 +761,19 @@ patientExhibitsCmd pid =
     in
         (post' (Decode.list symptomDecoder) (baseUrl ++ "/patient-exhibits") body)
             |> Task.perform RequestFail SymptomSucceed
+
+
+patientHasCmd : Int -> Cmd Msg
+patientHasCmd pid =
+    let
+        body =
+            [ ( "pid", Encode.int pid ), ( "columns", encodeCols diseaseTable.columns ) ]
+                |> Encode.object
+                |> Encode.encode 1
+                |> Http.string
+    in
+        (post' (Decode.list diseaseDecoder) (baseUrl ++ "/patient-has") body)
+            |> Task.perform RequestFail DiseaseTableSucceed
 
 
 
@@ -1047,9 +1061,9 @@ viewMyInfo model =
                     , Html.p []
                         [ viewTable "Your Symptoms" False symptomTable model.symptoms
                         ]
-                      -- , p []
-                      --     [ viewTable "Today's todo list" False patientTable model.otherPatients
-                      -- ]
+                    , Html.p []
+                        [ viewTable "Your Disease Diagnosis" False diseaseTable model.diseases
+                        ]
                     ]
 
         NoMePage ->
