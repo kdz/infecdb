@@ -155,6 +155,30 @@ def query_disease_by_hospital():
 
 
 
+
+@app.route('/patient-by-contacted-source', methods=['GET', 'POST'])
+def query_patient_by_contact_source():
+
+    log("starting patient_by_contact_source", "")
+
+    pid = request.json['pid']
+    cols = request.json['columns']
+
+    query_str = "SELECT " + ",".join(["p." + col for col in cols]) + " " + \
+                "FROM contacted c JOIN patient p " + \
+                "ON c.exposed_pid=p.pid " + \
+                "WHERE c.infected_pid=%s" % pid
+
+    cursor = g.conn.execute(query_str)
+    info = [row_to_dict(row, cols) for row in cursor]
+
+    log("completed patient_by_contact_source", "")
+
+    return jsonify(info)
+
+
+
+
 @app.route('/pid-login/<pid>', methods=['GET', 'POST'])
 def validate_pid(pid):
 

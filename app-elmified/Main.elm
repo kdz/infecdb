@@ -39,7 +39,7 @@ main =
 type alias Model =
     { hospitals : List Hospital
     , patients : List Patient
-    , medicTodo : List Patient
+    , otherPatients : List Patient
     , diseases : List Disease
     , symptoms : List Symptom
     , mePage : MePage
@@ -55,7 +55,7 @@ initModel : Model
 initModel =
     { hospitals = []
     , patients = []
-    , medicTodo = []
+    , otherPatients = []
     , diseases = []
     , symptoms = []
     , mePage = NoMePage
@@ -251,7 +251,7 @@ type Msg
     | PIDLoginSuccess Bool
     | MIDLoginSuccess Bool
     | PatientTableSucceed (List Patient)
-    | TodoTableSucceed (List Patient)
+    | OtherPatientTableSucceed (List Patient)
     | DiseaseTableSucceed (List Disease)
     | SymptomByDiseaseSucceed (List Symptom)
     | MedicMePageSucceed Medic
@@ -260,6 +260,7 @@ type Msg
     | NoJoin String Int
     | DiseaseByHospital String Int
     | SymptomByDisease String Int
+    | PatientByContactSource String Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -283,9 +284,9 @@ update msg model =
                     , Cmd.none
                     )
 
-                TodoTableSucceed incomingPatients ->
+                OtherPatientTableSucceed incomingPatients ->
                     ( { model
-                        | medicTodo = incomingPatients
+                        | otherPatients = incomingPatients
                         , fields = tableFields patientTable
                       }
                     , Cmd.none
@@ -324,15 +325,7 @@ update msg model =
                                 ( { model | mode = newMode }, diseaseLoadCmd )
 
                             MyInfoPage ->
-                                case model.loginStatus of
-                                    Public ->
-                                        ( { model | mode = newMode }, Cmd.none )
-
-                                    PatientLoggedIn pid ->
-                                        ( { model | mode = newMode }, Cmd.none )
-
-                                    MedicLoggedIn mid ->
-                                        ( { model | mode = newMode }, medicMePageCmd mid )
+                                ( { model | mode = newMode }, mePage model )
 
                 UpdateLogin numberMsg ->
                     ( { model
@@ -404,6 +397,9 @@ update msg model =
 
                 SymptomByDisease tblName ind ->
                     ( model, sympByDiseaseCmd (primaryKey model tblName ind) )
+
+                PatientByContactSource tblName ind ->
+                    ( model, patientByContactedSourceCmd (primaryKey model tblName ind) )
 
         _ =
             Debug.log "update: " ( msg, model.mode, model.loginStatus )
@@ -612,6 +608,17 @@ primaryKey model tblName ind =
 
                 Nothing ->
                     ""
+    else if tblName == "patient" then
+        let
+            p =
+                (getNth model.patients ind)
+        in
+            case p of
+                Just pat ->
+                    pat |> .pid
+
+                Nothing ->
+                    ""
     else
         Debug.crash "Could not find table key"
 
@@ -644,6 +651,21 @@ diseaseByHospitalCmd hospName =
             |> Task.perform RequestFail DiseaseTableSucceed
 
 
+patientByContactedSourceCmd : String -> Cmd Msg
+patientByContactedSourceCmd pid =
+    let
+        body =
+            [ ( "pid", Encode.string pid )
+            , ( "columns", encodeCols patientTable.columns )
+            ]
+                |> Encode.object
+                |> Encode.encode 1
+                |> Http.string
+    in
+        (post' (Decode.list patientDecoder) (baseUrl ++ "/patient-by-contacted-source") body)
+            |> Task.perform RequestFail OtherPatientTableSucceed
+
+
 
 -- Me page load
 
@@ -659,6 +681,15 @@ mePage model =
 
         MedicLoggedIn mid ->
             medicMePageCmd mid
+
+
+medicMePageCmd : Int -> Cmd Msg
+medicMePageCmd mid =
+    Cmd.batch
+        [ medicMePageMIDCmd mid
+        , medicContactedCmd mid
+        , medicsToDoCmd mid
+        ]
 
 
 medicMePageMIDCmd : Int -> Cmd Msg
@@ -698,16 +729,7 @@ medicsToDoCmd mid =
                 |> Http.string
     in
         (post' (Decode.list patientDecoder) (baseUrl ++ "/medic-todo") body)
-            |> Task.perform RequestFail TodoTableSucceed
-
-
-medicMePageCmd : Int -> Cmd Msg
-medicMePageCmd mid =
-    Cmd.batch
-        [ medicMePageMIDCmd mid
-        , medicContactedCmd mid
-        , medicsToDoCmd mid
-        ]
+            |> Task.perform RequestFail OtherPatientTableSucceed
 
 
 patientMePageCmd : Int -> Cmd Msg
@@ -801,7 +823,10 @@ view model =
                         ]
 
                 PatientPage ->
-                    model.patients |> viewTable "Patients" patientTable
+                    div []
+                        [ model.patients |> viewTable "Patients" patientTable
+                        , model.otherPatients |> viewTable "Contacts" patientTable
+                        ]
 
                 DiseasePage ->
                     div []
@@ -867,7 +892,7 @@ viewTable header tbl objects =
             if tbl.name == "hospital" then
                 DiseaseByHospital
             else if tbl.name == "patient" then
-                NoJoin
+                PatientByContactSource
             else if tbl.name == "disease" then
                 SymptomByDisease
             else
@@ -949,7 +974,7 @@ viewMyInfo model =
                         [ viewTable "Your Patients" patientTable model.patients
                         ]
                     , p []
-                        [ viewTable "Today's todo list" patientTable model.medicTodo
+                        [ viewTable "Today's todo list" patientTable model.otherPatients
                         ]
                     ]
 
