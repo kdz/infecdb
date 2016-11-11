@@ -253,27 +253,27 @@ type alias Medic =
 
 
 type Msg
-    = HospitalTableSucceed (List Hospital)
-    | RequestFail Http.Error
-    | MenuAct (Menu.Msg Mode)
-    | UpdateLogin Number.Msg
-    | PIDLoginAttempt
-    | MIDLoginAttempt
-    | PIDLoginSuccess String Bool
-    | MIDLoginSuccess String Bool
-    | PatientTableSucceed (List Patient)
-    | OtherPatientTableSucceed (List Patient)
-    | DiseaseTableSucceed (List Disease)
-    | SymptomSucceed (List Symptom)
-    | MedicTableSucceed (List Medic)
-    | MedicMePageSucceed Medic
-    | PatientMePageSucceed Patient
-    | UpdateFieldInput String String
-    | FieldSearch
-    | NoJoin String Int
-    | DiseaseByHospital String Int
-    | SymptomByDisease String Int
-    | PatientByContactSource String Int
+    = DB_HospitalTableSucceed (List Hospital)
+    | DB_RequestFail Http.Error
+    | UI_MenuAct (Menu.Msg Mode)
+    | UI_UpdateLogin Number.Msg
+    | UI_PIDLoginAttempt
+    | UI_MIDLoginAttempt
+    | DB_PIDLoginSuccess String Bool
+    | DB_MIDLoginSuccess String Bool
+    | DB_PatientTableSucceed (List Patient)
+    | DB_OtherPatientTableSucceed (List Patient)
+    | DB_DiseaseTableSucceed (List Disease)
+    | DB_SymptomSucceed (List Symptom)
+    | DB_MedicTableSucceed (List Medic)
+    | DB_MedicByMidSucceed Medic
+    | DB_PatientByPidSucceed Patient
+    | UI_UpdateFieldInput String String
+    | UI_DoFieldSearch
+    | UI_RowSelected_Ignore String Int
+    | UI_RowSelected_Hospital String Int
+    | UI_RowSelected_Disease String Int
+    | UI_RowSelected_Patient String Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -290,7 +290,7 @@ update msg model =
 
         result =
             case msg of
-                HospitalTableSucceed incomingHospitals ->
+                DB_HospitalTableSucceed incomingHospitals ->
                     ( { model
                         | hospitals = { list = incomingHospitals, sel = Nothing }
                         , fields = tableFields hospitalTable
@@ -298,7 +298,7 @@ update msg model =
                     , Cmd.none
                     )
 
-                PatientTableSucceed incomingPatients ->
+                DB_PatientTableSucceed incomingPatients ->
                     ( { model
                         | patients = { list = incomingPatients, sel = Nothing }
                         , fields = tableFields patientTable
@@ -306,7 +306,7 @@ update msg model =
                     , Cmd.none
                     )
 
-                OtherPatientTableSucceed incomingPatients ->
+                DB_OtherPatientTableSucceed incomingPatients ->
                     ( { model
                         | otherPatients = incomingPatients
                         , fields = tableFields patientTable
@@ -314,7 +314,7 @@ update msg model =
                     , incomingPatients |> mapLocations |> showMarkers
                     )
 
-                DiseaseTableSucceed incomingDiseases ->
+                DB_DiseaseTableSucceed incomingDiseases ->
                     ( { model
                         | diseases = { list = incomingDiseases, sel = Nothing }
                         , fields = tableFields diseaseTable
@@ -322,7 +322,7 @@ update msg model =
                     , Cmd.none
                     )
 
-                MedicTableSucceed incomingMedics ->
+                DB_MedicTableSucceed incomingMedics ->
                     ( { model
                         | medics = incomingMedics
                         , fields = tableFields medicTable
@@ -330,19 +330,19 @@ update msg model =
                     , Cmd.none
                     )
 
-                SymptomSucceed incomingSymptoms ->
+                DB_SymptomSucceed incomingSymptoms ->
                     ( { model | symptoms = incomingSymptoms }, Cmd.none )
 
-                MedicMePageSucceed medicInfo ->
+                DB_MedicByMidSucceed medicInfo ->
                     ( { model | mePage = MePageMedic medicInfo }, Cmd.none )
 
-                PatientMePageSucceed patientInfo ->
+                DB_PatientByPidSucceed patientInfo ->
                     ( { model | mePage = MePagePatient patientInfo }, Cmd.none )
 
-                RequestFail err ->
+                DB_RequestFail err ->
                     ( model, Cmd.none )
 
-                MenuAct (Menu.Select mode) ->
+                UI_MenuAct (Menu.Select mode) ->
                     let
                         newMode =
                             Menu.update (Menu.Select mode)
@@ -358,22 +358,22 @@ update msg model =
                                 ( { model | mode = newMode }, diseaseLoadCmd )
 
                             MyInfoPage ->
-                                ( { model | mode = newMode }, mePage model )
+                                ( { model | mode = newMode }, loadMyPageInfoCmd model )
 
-                UpdateLogin numberMsg ->
+                UI_UpdateLogin numberMsg ->
                     ( { model
                         | loginNumberModel = Number.update numberMsg model.loginNumberModel
                       }
                     , Cmd.none
                     )
 
-                PIDLoginAttempt ->
+                UI_PIDLoginAttempt ->
                     ( model, validatePidCmd model.loginNumberModel.value )
 
-                MIDLoginAttempt ->
+                UI_MIDLoginAttempt ->
                     ( model, validateMidCmd model.loginNumberModel.value )
 
-                PIDLoginSuccess pid success ->
+                DB_PIDLoginSuccess pid success ->
                     case success of
                         True ->
                             ( { model
@@ -389,7 +389,7 @@ update msg model =
                         False ->
                             ( model, Cmd.none )
 
-                MIDLoginSuccess mid success ->
+                DB_MIDLoginSuccess mid success ->
                     case success of
                         True ->
                             ( { model
@@ -405,10 +405,10 @@ update msg model =
                         False ->
                             ( model, Cmd.none )
 
-                UpdateFieldInput field val ->
+                UI_UpdateFieldInput field val ->
                     ( { model | fields = updateField field val model.fields }, Cmd.none )
 
-                FieldSearch ->
+                UI_DoFieldSearch ->
                     case model.mode of
                         HospitalPage ->
                             ( model, queryHospitalFieldsCmd model )
@@ -422,10 +422,10 @@ update msg model =
                         _ ->
                             ( model, Cmd.none )
 
-                NoJoin x i ->
+                UI_RowSelected_Ignore x i ->
                     ( model, Cmd.none )
 
-                DiseaseByHospital tblName ind ->
+                UI_RowSelected_Hospital tblName ind ->
                     let
                         hospitals =
                             model.hospitals
@@ -437,7 +437,7 @@ update msg model =
                         , diseaseByHospitalCmd (primaryKey model tblName ind)
                         )
 
-                SymptomByDisease tblName ind ->
+                UI_RowSelected_Disease tblName ind ->
                     -- ( model, sympByDiseaseCmd (primaryKey model tblName ind) )
                     let
                         diseases =
@@ -450,7 +450,7 @@ update msg model =
                         , sympByDiseaseCmd (primaryKey model tblName ind)
                         )
 
-                PatientByContactSource tblName ind ->
+                UI_RowSelected_Patient tblName ind ->
                     -- ( model, patientByContactedSourceCmd (primaryKey model tblName ind) )
                     let
                         patients =
@@ -537,8 +537,8 @@ encodeCols columns =
         |> Encode.list
 
 
-loadTable : Table a -> Decode.Decoder b -> (b -> Msg) -> Cmd Msg
-loadTable tbl dec successMsg =
+loadTableHelper : Table a -> Decode.Decoder b -> (b -> Msg) -> Cmd Msg
+loadTableHelper tbl dec successMsg =
     let
         body =
             [ ( "table_name", Encode.string tbl.name ), ( "columns", encodeCols tbl.columns ) ]
@@ -547,22 +547,22 @@ loadTable tbl dec successMsg =
                 |> Http.string
     in
         (post' dec (baseUrl ++ "/get-table") body)
-            |> Task.perform RequestFail successMsg
+            |> Task.perform DB_RequestFail successMsg
 
 
 hospitalLoadCmd : Cmd Msg
 hospitalLoadCmd =
-    loadTable hospitalTable (Decode.list hospitalDecoder) HospitalTableSucceed
+    loadTableHelper hospitalTable (Decode.list hospitalDecoder) DB_HospitalTableSucceed
 
 
 patientLoadCmd : Cmd Msg
 patientLoadCmd =
-    loadTable patientTable (Decode.list patientDecoder) PatientTableSucceed
+    loadTableHelper patientTable (Decode.list patientDecoder) DB_PatientTableSucceed
 
 
 diseaseLoadCmd : Cmd Msg
 diseaseLoadCmd =
-    loadTable diseaseTable (Decode.list diseaseDecoder) DiseaseTableSucceed
+    loadTableHelper diseaseTable (Decode.list diseaseDecoder) DB_DiseaseTableSucceed
 
 
 
@@ -572,13 +572,13 @@ diseaseLoadCmd =
 validatePidCmd : String -> Cmd Msg
 validatePidCmd pid =
     (Http.post Decode.bool (baseUrl ++ "/pid-login/" ++ pid) Http.empty)
-        |> Task.perform RequestFail (PIDLoginSuccess pid)
+        |> Task.perform DB_RequestFail (DB_PIDLoginSuccess pid)
 
 
 validateMidCmd : String -> Cmd Msg
 validateMidCmd mid =
     (Http.post Decode.bool (baseUrl ++ "/mid-login/" ++ mid) Http.empty)
-        |> Task.perform RequestFail (MIDLoginSuccess mid)
+        |> Task.perform DB_RequestFail (DB_MIDLoginSuccess mid)
 
 
 
@@ -606,22 +606,22 @@ queryFieldsCmd tbl fields dec successMsg =
                 |> Http.string
     in
         (post' dec (baseUrl ++ "/query-fields") body)
-            |> Task.perform RequestFail successMsg
+            |> Task.perform DB_RequestFail successMsg
 
 
 queryHospitalFieldsCmd : Model -> Cmd Msg
 queryHospitalFieldsCmd model =
-    queryFieldsCmd hospitalTable model.fields (Decode.list hospitalDecoder) HospitalTableSucceed
+    queryFieldsCmd hospitalTable model.fields (Decode.list hospitalDecoder) DB_HospitalTableSucceed
 
 
 queryPatientFieldsCmd : Model -> Cmd Msg
 queryPatientFieldsCmd model =
-    queryFieldsCmd patientTable model.fields (Decode.list patientDecoder) PatientTableSucceed
+    queryFieldsCmd patientTable model.fields (Decode.list patientDecoder) DB_PatientTableSucceed
 
 
 queryDiseaseFieldsCmd : Model -> Cmd Msg
 queryDiseaseFieldsCmd model =
-    queryFieldsCmd diseaseTable model.fields (Decode.list diseaseDecoder) DiseaseTableSucceed
+    queryFieldsCmd diseaseTable model.fields (Decode.list diseaseDecoder) DB_DiseaseTableSucceed
 
 
 
@@ -630,11 +630,6 @@ queryDiseaseFieldsCmd model =
 
 getNth : List a -> Int -> Maybe a
 getNth items i =
-    -- items
-    --     |> List.indexedMap (\ind elem -> ( ind, elem ))
-    --     |> List.filter (\( ind, elem ) -> ind == i)
-    --     |> List.map (\( ind, elem ) -> elem)
-    --     |> List.head
     items
         |> Array.fromList
         |> Array.get i
@@ -692,7 +687,7 @@ sympByDiseaseCmd virusName =
                 |> Http.string
     in
         (post' (Decode.list symptomDecoder) (baseUrl ++ "/symptom-by-disease") body)
-            |> Task.perform RequestFail SymptomSucceed
+            |> Task.perform DB_RequestFail DB_SymptomSucceed
 
 
 diseaseByHospitalCmd : String -> Cmd Msg
@@ -707,7 +702,7 @@ diseaseByHospitalCmd hospName =
                 |> Http.string
     in
         (post' (Decode.list diseaseDecoder) (baseUrl ++ "/disease-by-hospital") body)
-            |> Task.perform RequestFail DiseaseTableSucceed
+            |> Task.perform DB_RequestFail DB_DiseaseTableSucceed
 
 
 patientByContactedSourceCmd : String -> Cmd Msg
@@ -722,15 +717,15 @@ patientByContactedSourceCmd pid =
                 |> Http.string
     in
         (post' (Decode.list patientDecoder) (baseUrl ++ "/patient-by-contacted-source") body)
-            |> Task.perform RequestFail OtherPatientTableSucceed
+            |> Task.perform DB_RequestFail DB_OtherPatientTableSucceed
 
 
 
 -- Me page load
 
 
-mePage : Model -> Cmd Msg
-mePage model =
+loadMyPageInfoCmd : Model -> Cmd Msg
+loadMyPageInfoCmd model =
     case model.loginStatus of
         Public ->
             Cmd.none
@@ -747,7 +742,7 @@ mePage model =
         MedicLoggedIn mid ->
             Cmd.batch
                 [ medicByMIDCmd mid
-                , medicContactedCmd mid
+                , medicChecksOnCmd mid
                 , medicsToDoCmd mid
                 ]
 
@@ -763,11 +758,11 @@ medicByMIDCmd mid =
                 |> Http.string
     in
         (post' medicDecoder (baseUrl ++ "/medic-me") body)
-            |> Task.perform RequestFail MedicMePageSucceed
+            |> Task.perform DB_RequestFail DB_MedicByMidSucceed
 
 
-medicContactedCmd : Int -> Cmd Msg
-medicContactedCmd mid =
+medicChecksOnCmd : Int -> Cmd Msg
+medicChecksOnCmd mid =
     let
         body =
             [ ( "mid", Encode.int mid ), ( "columns", encodeCols patientTable.columns ) ]
@@ -776,7 +771,7 @@ medicContactedCmd mid =
                 |> Http.string
     in
         (post' (Decode.list patientDecoder) (baseUrl ++ "/medic-checks-on") body)
-            |> Task.perform RequestFail PatientTableSucceed
+            |> Task.perform DB_RequestFail DB_PatientTableSucceed
 
 
 medicsToDoCmd : Int -> Cmd Msg
@@ -789,7 +784,7 @@ medicsToDoCmd mid =
                 |> Http.string
     in
         (post' (Decode.list patientDecoder) (baseUrl ++ "/medic-todo") body)
-            |> Task.perform RequestFail OtherPatientTableSucceed
+            |> Task.perform DB_RequestFail DB_OtherPatientTableSucceed
 
 
 patientByPIDCmd : Int -> Cmd Msg
@@ -803,7 +798,7 @@ patientByPIDCmd pid =
                 |> Http.string
     in
         (post' patientDecoder (baseUrl ++ "/patient-me") body)
-            |> Task.perform RequestFail PatientMePageSucceed
+            |> Task.perform DB_RequestFail DB_PatientByPidSucceed
 
 
 patientExhibitsCmd : Int -> Cmd Msg
@@ -816,7 +811,7 @@ patientExhibitsCmd pid =
                 |> Http.string
     in
         (post' (Decode.list symptomDecoder) (baseUrl ++ "/patient-exhibits") body)
-            |> Task.perform RequestFail SymptomSucceed
+            |> Task.perform DB_RequestFail DB_SymptomSucceed
 
 
 patientHasCmd : Int -> Cmd Msg
@@ -829,7 +824,7 @@ patientHasCmd pid =
                 |> Http.string
     in
         (post' (Decode.list diseaseDecoder) (baseUrl ++ "/patient-has") body)
-            |> Task.perform RequestFail DiseaseTableSucceed
+            |> Task.perform DB_RequestFail DB_DiseaseTableSucceed
 
 
 patientMedicCmd : Int -> Cmd Msg
@@ -842,7 +837,7 @@ patientMedicCmd pid =
                 |> Http.string
     in
         (post' (Decode.list medicDecoder) (baseUrl ++ "/patient-medic") body)
-            |> Task.perform RequestFail MedicTableSucceed
+            |> Task.perform DB_RequestFail DB_MedicTableSucceed
 
 
 
@@ -919,7 +914,7 @@ view model =
         [ pureCSS
         , localcss
         , div [ id "layout" ]
-            [ Html.App.map MenuAct (Menu.view menu model.mode)
+            [ Html.App.map UI_MenuAct (Menu.view menu model.mode)
             , loginView model
             , case model.mode of
                 HospitalPage ->
@@ -972,11 +967,11 @@ loginView model =
                         ]
                     ]
                     model.loginNumberModel
-                    |> Html.App.map UpdateLogin
+                    |> Html.App.map UI_UpdateLogin
                 , text loginMsg
                 ]
-            , div [ onClick PIDLoginAttempt, class "pure-button" ] [ text "As Patient" ]
-            , div [ onClick MIDLoginAttempt, class "pure-button" ] [ text "As Medic" ]
+            , div [ onClick UI_PIDLoginAttempt, class "pure-button" ] [ text "As Patient" ]
+            , div [ onClick UI_MIDLoginAttempt, class "pure-button" ] [ text "As Medic" ]
             ]
 
 
@@ -985,13 +980,13 @@ viewTable header searchable tbl selIdx objects =
     let
         rowMsg =
             if tbl.name == "hospital" then
-                DiseaseByHospital
+                UI_RowSelected_Hospital
             else if tbl.name == "patient" then
-                PatientByContactSource
+                UI_RowSelected_Patient
             else if tbl.name == "disease" then
-                SymptomByDisease
+                UI_RowSelected_Disease
             else
-                NoJoin
+                UI_RowSelected_Ignore
 
         selectionIndex =
             case selIdx of
@@ -1024,7 +1019,7 @@ viewTable header searchable tbl selIdx objects =
             [ caption []
                 [ h2 [] [ text header ]
                 , if searchable then
-                    div [ class "pure-button pure-button-active", onClick FieldSearch ] [ text "search" ]
+                    div [ class "pure-button pure-button-active", onClick UI_DoFieldSearch ] [ text "search" ]
                   else
                     span [] []
                 ]
@@ -1036,7 +1031,7 @@ viewTable header searchable tbl selIdx objects =
                                 th []
                                     [ text name
                                     , if searchable then
-                                        input [ onInput (UpdateFieldInput name) ] []
+                                        input [ onInput (UI_UpdateFieldInput name) ] []
                                       else
                                         span [] []
                                     ]
