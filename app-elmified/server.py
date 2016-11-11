@@ -61,9 +61,9 @@ def index():
 
 def row_to_dict(row, cols):
     kmap = { k: pos for (k, (x, y, pos)) in row._keymap.items() }
-    log("kmap", kmap)
+    # log("kmap", kmap)
     result = { col : str(row._row[kmap[col]]) for col in cols }
-    log("extracted cols", result)
+    # log("extracted cols", result)
 
     return result
 
@@ -446,4 +446,4 @@ def log(msg, x):
 # Run app
 
 if __name__ == "__main__":
-    app.run(debug=True, port=7777)
+    app.run(debug=True, port=8111)
