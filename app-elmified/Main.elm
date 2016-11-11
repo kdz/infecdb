@@ -1,4 +1,4 @@
-module Main exposing (..)
+port module Main exposing (..)
 
 import Html exposing (button, text, div, Html, table, tr, td, node, h2, p, label, input, span, thead, th, tbody, caption)
 import Html.Attributes exposing (style, href, rel, type', class, id, for, src, attribute)
@@ -15,10 +15,6 @@ import Result
 import Menu
 import Array
 import Debug
-
-
--- import Json.Encode as Json
-
 import Task exposing (perform)
 
 
@@ -32,8 +28,15 @@ main =
         }
 
 
+port showMarkers : List Location -> Cmd oneway
+
+
 
 -- MODEL
+
+
+type alias Location =
+    { lat : Float, lng : Float }
 
 
 type alias SelList a =
@@ -44,6 +47,7 @@ type alias Model =
     { hospitals : SelList Hospital
     , patients : SelList Patient
     , otherPatients : List Patient
+    , otherPatientsExplanation : String
     , diseases : SelList Disease
     , symptoms : List Symptom
     , medics : List Medic
@@ -61,6 +65,7 @@ initModel =
     { hospitals = { list = [], sel = Nothing }
     , patients = { list = [], sel = Nothing }
     , otherPatients = []
+    , otherPatientsExplanation = ""
     , diseases = { list = [], sel = Nothing }
     , symptoms = []
     , medics = []
@@ -254,8 +259,8 @@ type Msg
     | UpdateLogin Number.Msg
     | PIDLoginAttempt
     | MIDLoginAttempt
-    | PIDLoginSuccess Bool
-    | MIDLoginSuccess Bool
+    | PIDLoginSuccess String Bool
+    | MIDLoginSuccess String Bool
     | PatientTableSucceed (List Patient)
     | OtherPatientTableSucceed (List Patient)
     | DiseaseTableSucceed (List Disease)
@@ -275,7 +280,13 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
         _ =
-            Debug.log "diseases.sel -> diseases.sel" ( model.diseases.sel, (fst result).diseases.sel )
+            Debug.log "**** Msg, Mode, Login" ( msg, model.mode, model.loginStatus )
+
+        float s =
+            String.toFloat s |> Result.withDefault 0
+
+        mapLocations locatableList =
+            locatableList |> List.map (\x -> Location (float x.latitude) (float x.longitude))
 
         result =
             case msg of
@@ -300,7 +311,7 @@ update msg model =
                         | otherPatients = incomingPatients
                         , fields = tableFields patientTable
                       }
-                    , Cmd.none
+                    , incomingPatients |> mapLocations |> showMarkers
                     )
 
                 DiseaseTableSucceed incomingDiseases ->
@@ -362,13 +373,13 @@ update msg model =
                 MIDLoginAttempt ->
                     ( model, validateMidCmd model.loginNumberModel.value )
 
-                PIDLoginSuccess success ->
+                PIDLoginSuccess pid success ->
                     case success of
                         True ->
                             ( { model
                                 | loginStatus =
                                     PatientLoggedIn
-                                        ((String.toInt model.loginNumberModel.value)
+                                        ((String.toInt pid)
                                             |> Result.withDefault 0
                                         )
                               }
@@ -378,13 +389,13 @@ update msg model =
                         False ->
                             ( model, Cmd.none )
 
-                MIDLoginSuccess success ->
+                MIDLoginSuccess mid success ->
                     case success of
                         True ->
                             ( { model
                                 | loginStatus =
                                     MedicLoggedIn
-                                        ((String.toInt model.loginNumberModel.value)
+                                        ((String.toInt mid)
                                             |> Result.withDefault 0
                                         )
                               }
@@ -451,9 +462,6 @@ update msg model =
                         ( { model | patients = patientsWithSelection }
                         , patientByContactedSourceCmd (primaryKey model tblName ind)
                         )
-
-        _ =
-            Debug.log "update: " ( msg, model.mode, model.loginStatus )
     in
         result
 
@@ -472,7 +480,7 @@ updateField field val oldFields =
 
 baseUrl : String
 baseUrl =
-    "http://kad2185.ngrok.io"
+    "http://localhost:7777"
 
 
 
@@ -564,13 +572,13 @@ diseaseLoadCmd =
 validatePidCmd : String -> Cmd Msg
 validatePidCmd pid =
     (Http.post Decode.bool (baseUrl ++ "/pid-login/" ++ pid) Http.empty)
-        |> Task.perform RequestFail PIDLoginSuccess
+        |> Task.perform RequestFail (PIDLoginSuccess pid)
 
 
 validateMidCmd : String -> Cmd Msg
 validateMidCmd mid =
     (Http.post Decode.bool (baseUrl ++ "/mid-login/" ++ mid) Http.empty)
-        |> Task.perform RequestFail MIDLoginSuccess
+        |> Task.perform RequestFail (MIDLoginSuccess mid)
 
 
 
@@ -908,9 +916,7 @@ medicDecoder =
 view : Model -> Html Msg
 view model =
     div []
-        [ scriptWebComponents
-        , importGoogleMapComponent
-        , pureCSS
+        [ pureCSS
         , localcss
         , div [ id "layout" ]
             [ Html.App.map MenuAct (Menu.view menu model.mode)
@@ -936,12 +942,7 @@ view model =
 
                 MyInfoPage ->
                     viewMyInfo model
-            , googleMap
-                [ attribute "latitude" "40.793575"
-                , attribute "longitude" "-73.950564"
-                ]
-                -- Can add google-map-marker child elements https://goo.gl/CDznwU
-                []
+            , h2 [] [ text model.otherPatientsExplanation ]
             ]
         ]
 
@@ -1014,8 +1015,8 @@ viewTable header searchable tbl selIdx objects =
                     else
                         []
 
-                _ =
-                    Debug.log "row Attrs: selIdx, i, click, sel" ( selIdx, i, click, sel )
+                -- _ =
+                --     Debug.log "row Attrs: selIdx, i, click, sel" ( selIdx, i, click, sel )
             in
                 click ++ sel
     in
@@ -1104,6 +1105,7 @@ viewMyInfo model =
                     , p []
                         [ model.otherPatients |> viewTable "Today's todo list" False patientTable Nothing
                         ]
+                    , h2 [] [ text "Map of todo list" ]
                     ]
 
         MePagePatient p ->
@@ -1150,26 +1152,11 @@ viewMyInfo model =
                     , Html.p []
                         [ model.diseases.list |> viewTable "Your Disease Diagnosis" False diseaseTable Nothing
                         ]
+                    , h2 [] [ text "Map of Others Exposed by Contact" ]
                     ]
 
         NoMePage ->
             div [] [ text "Please login to view your information." ]
-
-
-scriptWebComponents : Html a
-scriptWebComponents =
-    node "script" [ src "bower_components/webcomponentsjs/webcomponents-lite.min.js" ] []
-
-
-importGoogleMapComponent : Html a
-importGoogleMapComponent =
-    node "link" [ rel "import", href "bower_components/google-map/google-map.html" ] []
-
-
-googleMap : List (Html.Attribute a) -> List (Html a) -> Html a
-googleMap =
-    -- TODO: NEED API KEYS
-    Html.node "google-map"
 
 
 pureCSS : Html a

@@ -54,7 +54,7 @@ def index():
     """ Initial page load. """
     enter("index", request.args)
     exit("index", "")
-    return app.send_static_file('index.html')
+    return app.send_static_file('custom_index.html')
 
 
 # Queries
@@ -446,4 +446,4 @@ def log(msg, x):
 # Run app
 
 if __name__ == "__main__":
-    app.run(debug=True, port=8111)
+    app.run(debug=True, port=7777)

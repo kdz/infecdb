@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+       #map {
+        height: 400px;
+        width: 100%;
+        margin-left: 160px;
+        margin-top: 20px;
+       }
+    </style>
+  </head>
+  <body>
+
+
+    <!-- =========== ELM & PORTS SECTION ============ -->
+    <div id="elm"></div>
+
+      <script src="Main.js"></script>
+
+      <script>
+        var app = Elm.Main.embed(document.getElementById("elm"));
+
+        var MARKERS = [];
+        var MAP = null;
+        var DEFAULT_CENTER = {lat: 40.764396, lng: -73.95393};
+
+        app.ports.showMarkers.subscribe(function(locations) {
+
+          console.log("MAPS :: received in JS from Elm: ", locations);
+
+          deleteAllMarkers();
+
+          // console.log("Reset map back to default center", DEFAULT_CENTER);
+          // MAP.setCenter(new google.maps.LatLng(DEFAULT_CENTER));
+
+          if (locations.length > 0) {
+            for (var i = 0; i < locations.length; i++) {
+
+              // console.log("next loc:", locations[i].lat, locations[i].lng, locations[i].txt);
+
+              addMarker(locations[i]);
+            };
+
+            var bounds = new google.maps.LatLngBounds();
+            for (var i = 0; i < MARKERS.length; i++) {
+              bounds.extend(MARKERS[i].getPosition());
+            }
+
+            MAP.fitBounds(bounds);
+          }
+
+        });
+    </script>
+    <!-- =========== END ============ -->
+
+
+
+
+    <!-- =========== GOOGLE MAP SETUP SECTION ============= -->
+    <div id="map"></div>
+
+      <script>
+
+
+        // Adds a marker to the map and push to the array.
+        function addMarker(location) {
+          var marker = new google.maps.Marker({
+            position: location,
+            map: MAP
+          });
+          MARKERS.push(marker);
+        }
+
+
+        // Sets the map on all markers in the array.
+        function clearAllMarkers() {
+          for (var i = 0; i < MARKERS.length; i++) {
+            MARKERS[i].setMap(null);
+          }
+        }
+
+        // Deletes all markers in the array by removing references to them.
+        function deleteAllMarkers() {
+          clearAllMarkers();
+          MARKERS = [];
+        }
+
+        function initMap() {
+          MAP = new google.maps.Map(document.getElementById('map'), {
+            zoom: 4,
+            center: DEFAULT_CENTER,
+            title: 'Default Center'
+          });
+          // var marker = new google.maps.Marker({
+          //   position: uluru,
+          //   map: MAP
+          // // center and scale to fit markers https://goo.gl/FzgpmX
+          // });
+        }
+      </script>
+      <script async defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAlSrlB197t4bwzut_IAu-miW7VjbC_3qI&callback=initMap">
+      </script>
+
+
+
+
+  </body>
+</html>
