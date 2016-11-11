@@ -47,13 +47,16 @@ type alias Model =
     { hospitals : SelList Hospital
     , patients : SelList Patient
     , otherPatients : List Patient
-    , otherPatientsExplanation : String
+    , medicChecksOn : List Patient
+    , medicToDo : List Patient
+    , locationsForMap : List Location
+    , mapCaption : String
     , diseases : SelList Disease
     , symptoms : List Symptom
     , medics : List Medic
-    , mePage : MePage
     , mode : Mode
     , loginStatus : Status
+    , mePage : MePage
     , loginNumberModel : Number.Model
     , loginNumberOptions : Number.Options
     , fields : List Field
@@ -65,13 +68,16 @@ initModel =
     { hospitals = { list = [], sel = Nothing }
     , patients = { list = [], sel = Nothing }
     , otherPatients = []
-    , otherPatientsExplanation = ""
+    , medicChecksOn = []
+    , medicToDo = []
+    , locationsForMap = []
+    , mapCaption = ""
     , diseases = { list = [], sel = Nothing }
     , symptoms = []
     , medics = []
-    , mePage = NoMePage
     , mode = HospitalPage
     , loginStatus = Public
+    , mePage = NoMePage
     , loginNumberModel = (Number.init)
     , loginNumberOptions =
         ({ id = "NumberInput"
@@ -263,7 +269,11 @@ type Msg
     | DB_MIDLoginSuccess String Bool
     | DB_PatientTableSucceed (List Patient)
     | DB_OtherPatientTableSucceed (List Patient)
+    | DB_MedicToDoSucceed (List Patient)
+    | DB_MedicChecksOnSucceed (List Patient)
+      -- ----------
     | DB_DiseaseTableSucceed (List Disease)
+      -- ----------
     | DB_SymptomSucceed (List Symptom)
     | DB_MedicTableSucceed (List Medic)
     | DB_MedicByMidSucceed Medic
@@ -280,7 +290,9 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
         _ =
-            Debug.log "**** Msg, Mode, Login" ( msg, model.mode, model.loginStatus )
+            ( Debug.log "**** Msg, Mode, Login -> Mode, Login\n\t" ( msg, model.mode, model.loginStatus )
+            , Debug.log "\t\t-->" ( (fst result).mode, (fst result).loginStatus )
+            )
 
         float s =
             String.toFloat s |> Result.withDefault 0
@@ -294,16 +306,18 @@ update msg model =
                     ( { model
                         | hospitals = { list = incomingHospitals, sel = Nothing }
                         , fields = tableFields hospitalTable
+                        , mapCaption = "Map of Hospitals"
                       }
-                    , Cmd.none
+                    , incomingHospitals |> mapLocations |> showMarkers
                     )
 
                 DB_PatientTableSucceed incomingPatients ->
                     ( { model
                         | patients = { list = incomingPatients, sel = Nothing }
                         , fields = tableFields patientTable
+                        , mapCaption = "Map of Patients"
                       }
-                    , Cmd.none
+                    , incomingPatients |> mapLocations |> showMarkers
                     )
 
                 DB_OtherPatientTableSucceed incomingPatients ->
@@ -311,7 +325,19 @@ update msg model =
                         | otherPatients = incomingPatients
                         , fields = tableFields patientTable
                       }
-                    , incomingPatients |> mapLocations |> showMarkers
+                    , Cmd.none
+                    )
+
+                DB_MedicChecksOnSucceed patients ->
+                    ( { model | medicChecksOn = patients }, Cmd.none )
+
+                DB_MedicToDoSucceed patients ->
+                    ( { model
+                        | medicToDo = patients
+                        , locationsForMap = mapLocations patients
+                        , mapCaption = "Map of Your ToDo List"
+                      }
+                    , patients |> mapLocations |> showMarkers
                     )
 
                 DB_DiseaseTableSucceed incomingDiseases ->
@@ -334,10 +360,18 @@ update msg model =
                     ( { model | symptoms = incomingSymptoms }, Cmd.none )
 
                 DB_MedicByMidSucceed medicInfo ->
-                    ( { model | mePage = MePageMedic medicInfo }, Cmd.none )
+                    let
+                        model' =
+                            { model | mePage = MePageMedic medicInfo }
+                    in
+                        ( model', Cmd.none )
 
                 DB_PatientByPidSucceed patientInfo ->
-                    ( { model | mePage = MePagePatient patientInfo }, Cmd.none )
+                    let
+                        model' =
+                            { model | mePage = MePagePatient patientInfo }
+                    in
+                        ( model', Cmd.none )
 
                 DB_RequestFail err ->
                     ( model, Cmd.none )
@@ -358,7 +392,11 @@ update msg model =
                                 ( { model | mode = newMode }, diseaseLoadCmd )
 
                             MyInfoPage ->
-                                ( { model | mode = newMode }, loadMyPageInfoCmd model )
+                                let
+                                    model' =
+                                        { model | mode = newMode }
+                                in
+                                    ( model', loadMyPageInfoCmd model )
 
                 UI_UpdateLogin numberMsg ->
                     ( { model
@@ -517,13 +555,17 @@ baseUrl =
 
 post' : Decode.Decoder a -> String -> Http.Body -> Task.Task Http.Error a
 post' dec url body =
-    Http.send Http.defaultSettings
-        { verb = "POST"
-        , headers = [ ( "Content-type", "application/json" ) ]
-        , url = url
-        , body = body
-        }
-        |> Http.fromJson dec
+    let
+        _ =
+            Debug.log ">>> Ready to POST" ( url, body )
+    in
+        Http.send Http.defaultSettings
+            { verb = "POST"
+            , headers = [ ( "Content-type", "application/json" ) ]
+            , url = url
+            , body = body
+            }
+            |> Http.fromJson dec
 
 
 
@@ -571,13 +613,13 @@ diseaseLoadCmd =
 
 validatePidCmd : String -> Cmd Msg
 validatePidCmd pid =
-    (Http.post Decode.bool (baseUrl ++ "/pid-login/" ++ pid) Http.empty)
+    (post' Decode.bool (baseUrl ++ "/pid-login/" ++ pid) Http.empty)
         |> Task.perform DB_RequestFail (DB_PIDLoginSuccess pid)
 
 
 validateMidCmd : String -> Cmd Msg
 validateMidCmd mid =
-    (Http.post Decode.bool (baseUrl ++ "/mid-login/" ++ mid) Http.empty)
+    (post' Decode.bool (baseUrl ++ "/mid-login/" ++ mid) Http.empty)
         |> Task.perform DB_RequestFail (DB_MIDLoginSuccess mid)
 
 
@@ -731,12 +773,16 @@ loadMyPageInfoCmd model =
             Cmd.none
 
         PatientLoggedIn pid ->
-            Cmd.batch
-                [ patientByPIDCmd pid
-                , patientExhibitsCmd pid
-                , patientHasCmd pid
-                , patientMedicCmd pid
-                ]
+            let
+                _ =
+                    Debug.log "***Going to batch: patient ByPid; exhibitsCmd, HasCmd, MedicCmd" 0
+            in
+                Cmd.batch
+                    [ patientByPIDCmd pid
+                    , patientExhibitsCmd pid
+                    , patientHasCmd pid
+                    , patientMedicCmd pid
+                    ]
 
         -- patientMePageCmd pid
         MedicLoggedIn mid ->
@@ -771,7 +817,7 @@ medicChecksOnCmd mid =
                 |> Http.string
     in
         (post' (Decode.list patientDecoder) (baseUrl ++ "/medic-checks-on") body)
-            |> Task.perform DB_RequestFail DB_PatientTableSucceed
+            |> Task.perform DB_RequestFail DB_MedicChecksOnSucceed
 
 
 medicsToDoCmd : Int -> Cmd Msg
@@ -784,7 +830,7 @@ medicsToDoCmd mid =
                 |> Http.string
     in
         (post' (Decode.list patientDecoder) (baseUrl ++ "/medic-todo") body)
-            |> Task.perform DB_RequestFail DB_OtherPatientTableSucceed
+            |> Task.perform DB_RequestFail DB_MedicToDoSucceed
 
 
 patientByPIDCmd : Int -> Cmd Msg
@@ -937,7 +983,7 @@ view model =
 
                 MyInfoPage ->
                     viewMyInfo model
-            , h2 [] [ text model.otherPatientsExplanation ]
+            , h2 [] [ text model.mapCaption ]
             ]
         ]
 
@@ -1019,7 +1065,7 @@ viewTable header searchable tbl selIdx objects =
             [ caption []
                 [ h2 [] [ text header ]
                 , if searchable then
-                    div [ class "pure-button pure-button-active", onClick UI_DoFieldSearch ] [ text "search" ]
+                    div [ class "pure-button pure-button-active search-button", onClick UI_DoFieldSearch ] [ text "search" ]
                   else
                     span [] []
                 ]
@@ -1058,100 +1104,105 @@ viewTable header searchable tbl selIdx objects =
 
 viewMyInfo : Model -> Html Msg
 viewMyInfo model =
-    case model.mePage of
-        MePageMedic m ->
-            let
-                tbl =
-                    medicTable
-            in
-                div []
-                    [ table [ class "pure-table" ]
-                        [ caption []
-                            [ h2 [] [ text ("My Information: " ++ tbl.name) ]
-                            ]
-                        , thead []
-                            [ tr []
-                                (tbl.columns
-                                    |> List.map
-                                        (\( name, getter ) ->
-                                            th []
-                                                [ text name
-                                                ]
+    let
+        _ =
+            Debug.log "model.medicChecksOn length" (List.length model.medicChecksOn)
+
+        _ =
+            Debug.log "model.medicToDo length" (List.length model.medicToDo)
+    in
+        case model.mePage of
+            MePageMedic m ->
+                let
+                    tbl =
+                        medicTable
+                in
+                    div []
+                        [ table [ class "pure-table" ]
+                            [ caption []
+                                [ h2 [] [ text ("My Information: " ++ tbl.name) ]
+                                ]
+                            , thead []
+                                [ tr []
+                                    (tbl.columns
+                                        |> List.map
+                                            (\( name, getter ) ->
+                                                th []
+                                                    [ text name
+                                                    ]
+                                            )
+                                    )
+                                ]
+                            , tbody []
+                                ([ m ]
+                                    |> List.indexedMap
+                                        (\ind obj ->
+                                            tr []
+                                                (List.map
+                                                    (\( colName, getter ) ->
+                                                        td [] [ text (getter obj) ]
+                                                    )
+                                                    tbl.columns
+                                                )
                                         )
                                 )
                             ]
-                        , tbody []
-                            ([ m ]
-                                |> List.indexedMap
-                                    (\ind obj ->
-                                        tr []
-                                            (List.map
-                                                (\( colName, getter ) ->
-                                                    td [] [ text (getter obj) ]
-                                                )
-                                                tbl.columns
+                        , p []
+                            [ model.medicChecksOn |> viewTable "Your Patients" False patientTable Nothing
+                            ]
+                        , p []
+                            [ model.medicToDo |> viewTable "Today's todo list" False patientTable Nothing
+                            ]
+                        ]
+
+            MePagePatient p ->
+                let
+                    tbl =
+                        patientTable
+                in
+                    div []
+                        [ table [ class "pure-table" ]
+                            [ caption []
+                                [ h2 [] [ text ("My Information: " ++ tbl.name) ]
+                                ]
+                            , thead []
+                                [ tr []
+                                    (tbl.columns
+                                        |> List.map
+                                            (\( name, getter ) ->
+                                                th []
+                                                    [ text name
+                                                    ]
                                             )
                                     )
-                            )
-                        ]
-                    , p []
-                        [ model.patients.list |> viewTable "Your Patients" False patientTable Nothing
-                        ]
-                    , p []
-                        [ model.otherPatients |> viewTable "Today's todo list" False patientTable Nothing
-                        ]
-                    , h2 [] [ text "Map of todo list" ]
-                    ]
-
-        MePagePatient p ->
-            let
-                tbl =
-                    patientTable
-            in
-                div []
-                    [ table [ class "pure-table" ]
-                        [ caption []
-                            [ h2 [] [ text ("My Information: " ++ tbl.name) ]
-                            ]
-                        , thead []
-                            [ tr []
-                                (tbl.columns
-                                    |> List.map
-                                        (\( name, getter ) ->
-                                            th []
-                                                [ text name
-                                                ]
+                                ]
+                            , tbody []
+                                ([ p ]
+                                    |> List.indexedMap
+                                        (\ind obj ->
+                                            tr []
+                                                (List.map
+                                                    (\( colName, getter ) ->
+                                                        td [] [ text (getter obj) ]
+                                                    )
+                                                    tbl.columns
+                                                )
                                         )
                                 )
                             ]
-                        , tbody []
-                            ([ p ]
-                                |> List.indexedMap
-                                    (\ind obj ->
-                                        tr []
-                                            (List.map
-                                                (\( colName, getter ) ->
-                                                    td [] [ text (getter obj) ]
-                                                )
-                                                tbl.columns
-                                            )
-                                    )
-                            )
+                        , Html.p []
+                            [ model.medics |> viewTable "Your Doctor" False medicTable Nothing
+                            ]
+                        , Html.p []
+                            [ model.symptoms |> viewTable "Your Symptoms" False symptomTable Nothing
+                            ]
+                        , Html.p []
+                            [ model.diseases.list |> viewTable "Your Disease Diagnosis" False diseaseTable Nothing
+                            ]
                         ]
-                    , Html.p []
-                        [ model.medics |> viewTable "Your Doctor" False medicTable Nothing
-                        ]
-                    , Html.p []
-                        [ model.symptoms |> viewTable "Your Symptoms" False symptomTable Nothing
-                        ]
-                    , Html.p []
-                        [ model.diseases.list |> viewTable "Your Disease Diagnosis" False diseaseTable Nothing
-                        ]
-                    , h2 [] [ text "Map of Others Exposed by Contact" ]
-                    ]
 
-        NoMePage ->
-            div [] [ text "Please login to view your information." ]
+            NoMePage ->
+                div [] [ text "Please login to view your information." ]
 
 
 pureCSS : Html a

@@ -9095,8 +9095,8 @@ var _user$project$Main$primaryKey = F3(
 					return _elm_lang$core$Native_Utils.crash(
 						'Main',
 						{
-							start: {line: 685, column: 9},
-							end: {line: 685, column: 20}
+							start: {line: 719, column: 9},
+							end: {line: 719, column: 20}
 						})('Could not find table key');
 				}
 			}
@@ -9136,6 +9136,10 @@ var _user$project$Main$encodeCols = function (columns) {
 };
 var _user$project$Main$post$ = F3(
 	function (dec, url, body) {
+		var _p5 = A2(
+			_elm_lang$core$Debug$log,
+			'>>> Ready to POST',
+			{ctor: '_Tuple2', _0: url, _1: body});
 		return A2(
 			_evancz$elm_http$Http$fromJson,
 			dec,
@@ -9384,7 +9388,13 @@ var _user$project$Main$Model = function (a) {
 										return function (k) {
 											return function (l) {
 												return function (m) {
-													return {hospitals: a, patients: b, otherPatients: c, otherPatientsExplanation: d, diseases: e, symptoms: f, medics: g, mePage: h, mode: i, loginStatus: j, loginNumberModel: k, loginNumberOptions: l, fields: m};
+													return function (n) {
+														return function (o) {
+															return function (p) {
+																return {hospitals: a, patients: b, otherPatients: c, medicChecksOn: d, medicToDo: e, locationsForMap: f, mapCaption: g, diseases: h, symptoms: i, medics: j, mode: k, loginStatus: l, mePage: m, loginNumberModel: n, loginNumberOptions: o, fields: p};
+															};
+														};
+													};
 												};
 											};
 										};
@@ -9405,9 +9415,9 @@ var _user$project$Main$Field = F2(
 var _user$project$Main$tableFields = function (tbl) {
 	return A2(
 		_elm_lang$core$List$map,
-		function (_p5) {
-			var _p6 = _p5;
-			return A2(_user$project$Main$Field, _p6._0, '');
+		function (_p6) {
+			var _p7 = _p6;
+			return A2(_user$project$Main$Field, _p7._0, '');
 		},
 		tbl.columns);
 };
@@ -9564,7 +9574,13 @@ var _user$project$Main$initModel = {
 	},
 	otherPatients: _elm_lang$core$Native_List.fromArray(
 		[]),
-	otherPatientsExplanation: '',
+	medicChecksOn: _elm_lang$core$Native_List.fromArray(
+		[]),
+	medicToDo: _elm_lang$core$Native_List.fromArray(
+		[]),
+	locationsForMap: _elm_lang$core$Native_List.fromArray(
+		[]),
+	mapCaption: '',
 	diseases: {
 		list: _elm_lang$core$Native_List.fromArray(
 			[]),
@@ -9574,9 +9590,9 @@ var _user$project$Main$initModel = {
 		[]),
 	medics: _elm_lang$core$Native_List.fromArray(
 		[]),
-	mePage: _user$project$Main$NoMePage,
 	mode: _user$project$Main$HospitalPage,
 	loginStatus: _user$project$Main$Public,
+	mePage: _user$project$Main$NoMePage,
 	loginNumberModel: _abadi199$elm_input_extra$Input_Number$init,
 	loginNumberOptions: {
 		id: 'NumberInput',
@@ -9592,38 +9608,38 @@ var _user$project$Main$MePagePatient = function (a) {
 var _user$project$Main$MePageMedic = function (a) {
 	return {ctor: 'MePageMedic', _0: a};
 };
-var _user$project$Main$PatientByContactSource = F2(
+var _user$project$Main$UI_RowSelected_Patient = F2(
 	function (a, b) {
-		return {ctor: 'PatientByContactSource', _0: a, _1: b};
+		return {ctor: 'UI_RowSelected_Patient', _0: a, _1: b};
 	});
-var _user$project$Main$SymptomByDisease = F2(
+var _user$project$Main$UI_RowSelected_Disease = F2(
 	function (a, b) {
-		return {ctor: 'SymptomByDisease', _0: a, _1: b};
+		return {ctor: 'UI_RowSelected_Disease', _0: a, _1: b};
 	});
-var _user$project$Main$DiseaseByHospital = F2(
+var _user$project$Main$UI_RowSelected_Hospital = F2(
 	function (a, b) {
-		return {ctor: 'DiseaseByHospital', _0: a, _1: b};
+		return {ctor: 'UI_RowSelected_Hospital', _0: a, _1: b};
 	});
-var _user$project$Main$NoJoin = F2(
+var _user$project$Main$UI_RowSelected_Ignore = F2(
 	function (a, b) {
-		return {ctor: 'NoJoin', _0: a, _1: b};
+		return {ctor: 'UI_RowSelected_Ignore', _0: a, _1: b};
 	});
-var _user$project$Main$FieldSearch = {ctor: 'FieldSearch'};
-var _user$project$Main$UpdateFieldInput = F2(
+var _user$project$Main$UI_DoFieldSearch = {ctor: 'UI_DoFieldSearch'};
+var _user$project$Main$UI_UpdateFieldInput = F2(
 	function (a, b) {
-		return {ctor: 'UpdateFieldInput', _0: a, _1: b};
+		return {ctor: 'UI_UpdateFieldInput', _0: a, _1: b};
 	});
 var _user$project$Main$viewTable = F5(
 	function (header, searchable, tbl, selIdx, objects) {
 		var selectionIndex = function () {
-			var _p7 = selIdx;
-			if (_p7.ctor === 'Nothing') {
+			var _p8 = selIdx;
+			if (_p8.ctor === 'Nothing') {
 				return -99;
 			} else {
-				return _p7._0;
+				return _p8._0;
 			}
 		}();
-		var rowMsg = _elm_lang$core$Native_Utils.eq(tbl.name, 'hospital') ? _user$project$Main$DiseaseByHospital : (_elm_lang$core$Native_Utils.eq(tbl.name, 'patient') ? _user$project$Main$PatientByContactSource : (_elm_lang$core$Native_Utils.eq(tbl.name, 'disease') ? _user$project$Main$SymptomByDisease : _user$project$Main$NoJoin));
+		var rowMsg = _elm_lang$core$Native_Utils.eq(tbl.name, 'hospital') ? _user$project$Main$UI_RowSelected_Hospital : (_elm_lang$core$Native_Utils.eq(tbl.name, 'patient') ? _user$project$Main$UI_RowSelected_Patient : (_elm_lang$core$Native_Utils.eq(tbl.name, 'disease') ? _user$project$Main$UI_RowSelected_Disease : _user$project$Main$UI_RowSelected_Ignore));
 		var rowAttrs = function (i) {
 			var sel = _elm_lang$core$Native_Utils.eq(selectionIndex, i) ? _elm_lang$core$Native_List.fromArray(
 				[
@@ -9664,8 +9680,8 @@ var _user$project$Main$viewTable = F5(
 							_elm_lang$html$Html$div,
 							_elm_lang$core$Native_List.fromArray(
 								[
-									_elm_lang$html$Html_Attributes$class('pure-button pure-button-active'),
-									_elm_lang$html$Html_Events$onClick(_user$project$Main$FieldSearch)
+									_elm_lang$html$Html_Attributes$class('pure-button pure-button-active search-button'),
+									_elm_lang$html$Html_Events$onClick(_user$project$Main$UI_DoFieldSearch)
 								]),
 							_elm_lang$core$Native_List.fromArray(
 								[
@@ -9689,22 +9705,22 @@ var _user$project$Main$viewTable = F5(
 								[]),
 							A2(
 								_elm_lang$core$List$map,
-								function (_p8) {
-									var _p9 = _p8;
-									var _p10 = _p9._0;
+								function (_p9) {
+									var _p10 = _p9;
+									var _p11 = _p10._0;
 									return A2(
 										_elm_lang$html$Html$th,
 										_elm_lang$core$Native_List.fromArray(
 											[]),
 										_elm_lang$core$Native_List.fromArray(
 											[
-												_elm_lang$html$Html$text(_p10),
+												_elm_lang$html$Html$text(_p11),
 												searchable ? A2(
 												_elm_lang$html$Html$input,
 												_elm_lang$core$Native_List.fromArray(
 													[
 														_elm_lang$html$Html_Events$onInput(
-														_user$project$Main$UpdateFieldInput(_p10))
+														_user$project$Main$UI_UpdateFieldInput(_p11))
 													]),
 												_elm_lang$core$Native_List.fromArray(
 													[])) : A2(
@@ -9730,8 +9746,8 @@ var _user$project$Main$viewTable = F5(
 									rowAttrs(ind),
 									A2(
 										_elm_lang$core$List$map,
-										function (_p11) {
-											var _p12 = _p11;
+										function (_p12) {
+											var _p13 = _p12;
 											return A2(
 												_elm_lang$html$Html$td,
 												_elm_lang$core$Native_List.fromArray(
@@ -9739,7 +9755,7 @@ var _user$project$Main$viewTable = F5(
 												_elm_lang$core$Native_List.fromArray(
 													[
 														_elm_lang$html$Html$text(
-														_p12._1(obj))
+														_p13._1(obj))
 													]));
 										},
 										tbl.columns));
@@ -9748,8 +9764,16 @@ var _user$project$Main$viewTable = F5(
 				]));
 	});
 var _user$project$Main$viewMyInfo = function (model) {
-	var _p13 = model.mePage;
-	switch (_p13.ctor) {
+	var _p14 = A2(
+		_elm_lang$core$Debug$log,
+		'model.medicToDo length',
+		_elm_lang$core$List$length(model.medicToDo));
+	var _p15 = A2(
+		_elm_lang$core$Debug$log,
+		'model.medicChecksOn length',
+		_elm_lang$core$List$length(model.medicChecksOn));
+	var _p16 = model.mePage;
+	switch (_p16.ctor) {
 		case 'MePageMedic':
 			var tbl = _user$project$Main$medicTable;
 			return A2(
@@ -9794,15 +9818,15 @@ var _user$project$Main$viewMyInfo = function (model) {
 											[]),
 										A2(
 											_elm_lang$core$List$map,
-											function (_p14) {
-												var _p15 = _p14;
+											function (_p17) {
+												var _p18 = _p17;
 												return A2(
 													_elm_lang$html$Html$th,
 													_elm_lang$core$Native_List.fromArray(
 														[]),
 													_elm_lang$core$Native_List.fromArray(
 														[
-															_elm_lang$html$Html$text(_p15._0)
+															_elm_lang$html$Html$text(_p18._0)
 														]));
 											},
 											tbl.columns))
@@ -9821,8 +9845,8 @@ var _user$project$Main$viewMyInfo = function (model) {
 													[]),
 												A2(
 													_elm_lang$core$List$map,
-													function (_p16) {
-														var _p17 = _p16;
+													function (_p19) {
+														var _p20 = _p19;
 														return A2(
 															_elm_lang$html$Html$td,
 															_elm_lang$core$Native_List.fromArray(
@@ -9830,13 +9854,13 @@ var _user$project$Main$viewMyInfo = function (model) {
 															_elm_lang$core$Native_List.fromArray(
 																[
 																	_elm_lang$html$Html$text(
-																	_p17._1(obj))
+																	_p20._1(obj))
 																]));
 													},
 													tbl.columns));
 										}),
 									_elm_lang$core$Native_List.fromArray(
-										[_p13._0])))
+										[_p16._0])))
 							])),
 						A2(
 						_elm_lang$html$Html$p,
@@ -9844,7 +9868,7 @@ var _user$project$Main$viewMyInfo = function (model) {
 							[]),
 						_elm_lang$core$Native_List.fromArray(
 							[
-								A5(_user$project$Main$viewTable, 'Your Patients', false, _user$project$Main$patientTable, _elm_lang$core$Maybe$Nothing, model.patients.list)
+								A5(_user$project$Main$viewTable, 'Your Patients', false, _user$project$Main$patientTable, _elm_lang$core$Maybe$Nothing, model.medicChecksOn)
 							])),
 						A2(
 						_elm_lang$html$Html$p,
@@ -9852,15 +9876,7 @@ var _user$project$Main$viewMyInfo = function (model) {
 							[]),
 						_elm_lang$core$Native_List.fromArray(
 							[
-								A5(_user$project$Main$viewTable, 'Today\'s todo list', false, _user$project$Main$patientTable, _elm_lang$core$Maybe$Nothing, model.otherPatients)
-							])),
-						A2(
-						_elm_lang$html$Html$h2,
-						_elm_lang$core$Native_List.fromArray(
-							[]),
-						_elm_lang$core$Native_List.fromArray(
-							[
-								_elm_lang$html$Html$text('Map of todo list')
+								A5(_user$project$Main$viewTable, 'Today\'s todo list', false, _user$project$Main$patientTable, _elm_lang$core$Maybe$Nothing, model.medicToDo)
 							]))
 					]));
 		case 'MePagePatient':
@@ -9907,15 +9923,15 @@ var _user$project$Main$viewMyInfo = function (model) {
 											[]),
 										A2(
 											_elm_lang$core$List$map,
-											function (_p18) {
-												var _p19 = _p18;
+											function (_p21) {
+												var _p22 = _p21;
 												return A2(
 													_elm_lang$html$Html$th,
 													_elm_lang$core$Native_List.fromArray(
 														[]),
 													_elm_lang$core$Native_List.fromArray(
 														[
-															_elm_lang$html$Html$text(_p19._0)
+															_elm_lang$html$Html$text(_p22._0)
 														]));
 											},
 											tbl.columns))
@@ -9934,8 +9950,8 @@ var _user$project$Main$viewMyInfo = function (model) {
 													[]),
 												A2(
 													_elm_lang$core$List$map,
-													function (_p20) {
-														var _p21 = _p20;
+													function (_p23) {
+														var _p24 = _p23;
 														return A2(
 															_elm_lang$html$Html$td,
 															_elm_lang$core$Native_List.fromArray(
@@ -9943,13 +9959,13 @@ var _user$project$Main$viewMyInfo = function (model) {
 															_elm_lang$core$Native_List.fromArray(
 																[
 																	_elm_lang$html$Html$text(
-																	_p21._1(obj))
+																	_p24._1(obj))
 																]));
 													},
 													tbl.columns));
 										}),
 									_elm_lang$core$Native_List.fromArray(
-										[_p13._0])))
+										[_p16._0])))
 							])),
 						A2(
 						_elm_lang$html$Html$p,
@@ -9987,54 +10003,62 @@ var _user$project$Main$viewMyInfo = function (model) {
 					]));
 	}
 };
-var _user$project$Main$PatientMePageSucceed = function (a) {
-	return {ctor: 'PatientMePageSucceed', _0: a};
+var _user$project$Main$DB_PatientByPidSucceed = function (a) {
+	return {ctor: 'DB_PatientByPidSucceed', _0: a};
 };
-var _user$project$Main$MedicMePageSucceed = function (a) {
-	return {ctor: 'MedicMePageSucceed', _0: a};
+var _user$project$Main$DB_MedicByMidSucceed = function (a) {
+	return {ctor: 'DB_MedicByMidSucceed', _0: a};
 };
-var _user$project$Main$MedicTableSucceed = function (a) {
-	return {ctor: 'MedicTableSucceed', _0: a};
+var _user$project$Main$DB_MedicTableSucceed = function (a) {
+	return {ctor: 'DB_MedicTableSucceed', _0: a};
 };
-var _user$project$Main$SymptomSucceed = function (a) {
-	return {ctor: 'SymptomSucceed', _0: a};
+var _user$project$Main$DB_SymptomSucceed = function (a) {
+	return {ctor: 'DB_SymptomSucceed', _0: a};
 };
-var _user$project$Main$DiseaseTableSucceed = function (a) {
-	return {ctor: 'DiseaseTableSucceed', _0: a};
+var _user$project$Main$DB_DiseaseTableSucceed = function (a) {
+	return {ctor: 'DB_DiseaseTableSucceed', _0: a};
 };
-var _user$project$Main$OtherPatientTableSucceed = function (a) {
-	return {ctor: 'OtherPatientTableSucceed', _0: a};
+var _user$project$Main$DB_MedicChecksOnSucceed = function (a) {
+	return {ctor: 'DB_MedicChecksOnSucceed', _0: a};
 };
-var _user$project$Main$PatientTableSucceed = function (a) {
-	return {ctor: 'PatientTableSucceed', _0: a};
+var _user$project$Main$DB_MedicToDoSucceed = function (a) {
+	return {ctor: 'DB_MedicToDoSucceed', _0: a};
 };
-var _user$project$Main$MIDLoginSuccess = function (a) {
-	return {ctor: 'MIDLoginSuccess', _0: a};
+var _user$project$Main$DB_OtherPatientTableSucceed = function (a) {
+	return {ctor: 'DB_OtherPatientTableSucceed', _0: a};
 };
-var _user$project$Main$PIDLoginSuccess = function (a) {
-	return {ctor: 'PIDLoginSuccess', _0: a};
+var _user$project$Main$DB_PatientTableSucceed = function (a) {
+	return {ctor: 'DB_PatientTableSucceed', _0: a};
 };
-var _user$project$Main$MIDLoginAttempt = {ctor: 'MIDLoginAttempt'};
-var _user$project$Main$PIDLoginAttempt = {ctor: 'PIDLoginAttempt'};
-var _user$project$Main$UpdateLogin = function (a) {
-	return {ctor: 'UpdateLogin', _0: a};
+var _user$project$Main$DB_MIDLoginSuccess = F2(
+	function (a, b) {
+		return {ctor: 'DB_MIDLoginSuccess', _0: a, _1: b};
+	});
+var _user$project$Main$DB_PIDLoginSuccess = F2(
+	function (a, b) {
+		return {ctor: 'DB_PIDLoginSuccess', _0: a, _1: b};
+	});
+var _user$project$Main$UI_MIDLoginAttempt = {ctor: 'UI_MIDLoginAttempt'};
+var _user$project$Main$UI_PIDLoginAttempt = {ctor: 'UI_PIDLoginAttempt'};
+var _user$project$Main$UI_UpdateLogin = function (a) {
+	return {ctor: 'UI_UpdateLogin', _0: a};
 };
 var _user$project$Main$loginView = function (model) {
 	var loginMsg = function () {
-		var _p22 = model.loginStatus;
-		switch (_p22.ctor) {
+		var _p25 = model.loginStatus;
+		switch (_p25.ctor) {
 			case 'Public':
 				return '';
 			case 'PatientLoggedIn':
 				return A2(
 					_elm_lang$core$Basics_ops['++'],
 					'Logged in as patient ',
-					_elm_lang$core$Basics$toString(_p22._0));
+					_elm_lang$core$Basics$toString(_p25._0));
 			default:
 				return A2(
 					_elm_lang$core$Basics_ops['++'],
 					'Logged in as medic ',
-					_elm_lang$core$Basics$toString(_p22._0));
+					_elm_lang$core$Basics$toString(_p25._0));
 		}
 	}();
 	return A2(
@@ -10061,7 +10085,7 @@ var _user$project$Main$loginView = function (model) {
 							])),
 						A2(
 						_elm_lang$html$Html_App$map,
-						_user$project$Main$UpdateLogin,
+						_user$project$Main$UI_UpdateLogin,
 						A3(
 							_abadi199$elm_input_extra$Input_Number$input,
 							model.loginNumberOptions,
@@ -10082,7 +10106,7 @@ var _user$project$Main$loginView = function (model) {
 				_elm_lang$html$Html$div,
 				_elm_lang$core$Native_List.fromArray(
 					[
-						_elm_lang$html$Html_Events$onClick(_user$project$Main$PIDLoginAttempt),
+						_elm_lang$html$Html_Events$onClick(_user$project$Main$UI_PIDLoginAttempt),
 						_elm_lang$html$Html_Attributes$class('pure-button')
 					]),
 				_elm_lang$core$Native_List.fromArray(
@@ -10093,7 +10117,7 @@ var _user$project$Main$loginView = function (model) {
 				_elm_lang$html$Html$div,
 				_elm_lang$core$Native_List.fromArray(
 					[
-						_elm_lang$html$Html_Events$onClick(_user$project$Main$MIDLoginAttempt),
+						_elm_lang$html$Html_Events$onClick(_user$project$Main$UI_MIDLoginAttempt),
 						_elm_lang$html$Html_Attributes$class('pure-button')
 					]),
 				_elm_lang$core$Native_List.fromArray(
@@ -10102,8 +10126,8 @@ var _user$project$Main$loginView = function (model) {
 					]))
 			]));
 };
-var _user$project$Main$MenuAct = function (a) {
-	return {ctor: 'MenuAct', _0: a};
+var _user$project$Main$UI_MenuAct = function (a) {
+	return {ctor: 'UI_MenuAct', _0: a};
 };
 var _user$project$Main$view = function (model) {
 	return A2(
@@ -10124,12 +10148,12 @@ var _user$project$Main$view = function (model) {
 					[
 						A2(
 						_elm_lang$html$Html_App$map,
-						_user$project$Main$MenuAct,
+						_user$project$Main$UI_MenuAct,
 						A2(_user$project$Menu$view, _user$project$Main$menu, model.mode)),
 						_user$project$Main$loginView(model),
 						function () {
-						var _p23 = model.mode;
-						switch (_p23.ctor) {
+						var _p26 = model.mode;
+						switch (_p26.ctor) {
 							case 'HospitalPage':
 								return A2(
 									_elm_lang$html$Html$div,
@@ -10170,15 +10194,15 @@ var _user$project$Main$view = function (model) {
 							[]),
 						_elm_lang$core$Native_List.fromArray(
 							[
-								_elm_lang$html$Html$text(model.otherPatientsExplanation)
+								_elm_lang$html$Html$text(model.mapCaption)
 							]))
 					]))
 			]));
 };
-var _user$project$Main$RequestFail = function (a) {
-	return {ctor: 'RequestFail', _0: a};
+var _user$project$Main$DB_RequestFail = function (a) {
+	return {ctor: 'DB_RequestFail', _0: a};
 };
-var _user$project$Main$loadTable = F3(
+var _user$project$Main$loadTableHelper = F3(
 	function (tbl, dec, successMsg) {
 		var body = _evancz$elm_http$Http$string(
 			A2(
@@ -10200,7 +10224,7 @@ var _user$project$Main$loadTable = F3(
 						]))));
 		return A3(
 			_elm_lang$core$Task$perform,
-			_user$project$Main$RequestFail,
+			_user$project$Main$DB_RequestFail,
 			successMsg,
 			A3(
 				_user$project$Main$post$,
@@ -10209,22 +10233,22 @@ var _user$project$Main$loadTable = F3(
 				body));
 	});
 var _user$project$Main$patientLoadCmd = A3(
-	_user$project$Main$loadTable,
+	_user$project$Main$loadTableHelper,
 	_user$project$Main$patientTable,
 	_elm_lang$core$Json_Decode$list(_user$project$Main$patientDecoder),
-	_user$project$Main$PatientTableSucceed);
+	_user$project$Main$DB_PatientTableSucceed);
 var _user$project$Main$diseaseLoadCmd = A3(
-	_user$project$Main$loadTable,
+	_user$project$Main$loadTableHelper,
 	_user$project$Main$diseaseTable,
 	_elm_lang$core$Json_Decode$list(_user$project$Main$diseaseDecoder),
-	_user$project$Main$DiseaseTableSucceed);
+	_user$project$Main$DB_DiseaseTableSucceed);
 var _user$project$Main$validatePidCmd = function (pid) {
 	return A3(
 		_elm_lang$core$Task$perform,
-		_user$project$Main$RequestFail,
-		_user$project$Main$PIDLoginSuccess,
+		_user$project$Main$DB_RequestFail,
+		_user$project$Main$DB_PIDLoginSuccess(pid),
 		A3(
-			_evancz$elm_http$Http$post,
+			_user$project$Main$post$,
 			_elm_lang$core$Json_Decode$bool,
 			A2(
 				_elm_lang$core$Basics_ops['++'],
@@ -10235,10 +10259,10 @@ var _user$project$Main$validatePidCmd = function (pid) {
 var _user$project$Main$validateMidCmd = function (mid) {
 	return A3(
 		_elm_lang$core$Task$perform,
-		_user$project$Main$RequestFail,
-		_user$project$Main$MIDLoginSuccess,
+		_user$project$Main$DB_RequestFail,
+		_user$project$Main$DB_MIDLoginSuccess(mid),
 		A3(
-			_evancz$elm_http$Http$post,
+			_user$project$Main$post$,
 			_elm_lang$core$Json_Decode$bool,
 			A2(
 				_elm_lang$core$Basics_ops['++'],
@@ -10273,7 +10297,7 @@ var _user$project$Main$queryFieldsCmd = F4(
 						]))));
 		return A3(
 			_elm_lang$core$Task$perform,
-			_user$project$Main$RequestFail,
+			_user$project$Main$DB_RequestFail,
 			successMsg,
 			A3(
 				_user$project$Main$post$,
@@ -10287,7 +10311,7 @@ var _user$project$Main$queryPatientFieldsCmd = function (model) {
 		_user$project$Main$patientTable,
 		model.fields,
 		_elm_lang$core$Json_Decode$list(_user$project$Main$patientDecoder),
-		_user$project$Main$PatientTableSucceed);
+		_user$project$Main$DB_PatientTableSucceed);
 };
 var _user$project$Main$queryDiseaseFieldsCmd = function (model) {
 	return A4(
@@ -10295,7 +10319,7 @@ var _user$project$Main$queryDiseaseFieldsCmd = function (model) {
 		_user$project$Main$diseaseTable,
 		model.fields,
 		_elm_lang$core$Json_Decode$list(_user$project$Main$diseaseDecoder),
-		_user$project$Main$DiseaseTableSucceed);
+		_user$project$Main$DB_DiseaseTableSucceed);
 };
 var _user$project$Main$sympByDiseaseCmd = function (virusName) {
 	var body = _evancz$elm_http$Http$string(
@@ -10313,8 +10337,8 @@ var _user$project$Main$sympByDiseaseCmd = function (virusName) {
 					]))));
 	return A3(
 		_elm_lang$core$Task$perform,
-		_user$project$Main$RequestFail,
-		_user$project$Main$SymptomSucceed,
+		_user$project$Main$DB_RequestFail,
+		_user$project$Main$DB_SymptomSucceed,
 		A3(
 			_user$project$Main$post$,
 			_elm_lang$core$Json_Decode$list(_user$project$Main$symptomDecoder),
@@ -10342,8 +10366,8 @@ var _user$project$Main$diseaseByHospitalCmd = function (hospName) {
 					]))));
 	return A3(
 		_elm_lang$core$Task$perform,
-		_user$project$Main$RequestFail,
-		_user$project$Main$DiseaseTableSucceed,
+		_user$project$Main$DB_RequestFail,
+		_user$project$Main$DB_DiseaseTableSucceed,
 		A3(
 			_user$project$Main$post$,
 			_elm_lang$core$Json_Decode$list(_user$project$Main$diseaseDecoder),
@@ -10371,8 +10395,8 @@ var _user$project$Main$patientByContactedSourceCmd = function (pid) {
 					]))));
 	return A3(
 		_elm_lang$core$Task$perform,
-		_user$project$Main$RequestFail,
-		_user$project$Main$OtherPatientTableSucceed,
+		_user$project$Main$DB_RequestFail,
+		_user$project$Main$DB_OtherPatientTableSucceed,
 		A3(
 			_user$project$Main$post$,
 			_elm_lang$core$Json_Decode$list(_user$project$Main$patientDecoder),
@@ -10400,15 +10424,15 @@ var _user$project$Main$medicByMIDCmd = function (mid) {
 					]))));
 	return A3(
 		_elm_lang$core$Task$perform,
-		_user$project$Main$RequestFail,
-		_user$project$Main$MedicMePageSucceed,
+		_user$project$Main$DB_RequestFail,
+		_user$project$Main$DB_MedicByMidSucceed,
 		A3(
 			_user$project$Main$post$,
 			_user$project$Main$medicDecoder,
 			A2(_elm_lang$core$Basics_ops['++'], _user$project$Main$baseUrl, '/medic-me'),
 			body));
 };
-var _user$project$Main$medicContactedCmd = function (mid) {
+var _user$project$Main$medicChecksOnCmd = function (mid) {
 	var body = _evancz$elm_http$Http$string(
 		A2(
 			_elm_lang$core$Json_Encode$encode,
@@ -10429,8 +10453,8 @@ var _user$project$Main$medicContactedCmd = function (mid) {
 					]))));
 	return A3(
 		_elm_lang$core$Task$perform,
-		_user$project$Main$RequestFail,
-		_user$project$Main$PatientTableSucceed,
+		_user$project$Main$DB_RequestFail,
+		_user$project$Main$DB_MedicChecksOnSucceed,
 		A3(
 			_user$project$Main$post$,
 			_elm_lang$core$Json_Decode$list(_user$project$Main$patientDecoder),
@@ -10458,8 +10482,8 @@ var _user$project$Main$medicsToDoCmd = function (mid) {
 					]))));
 	return A3(
 		_elm_lang$core$Task$perform,
-		_user$project$Main$RequestFail,
-		_user$project$Main$OtherPatientTableSucceed,
+		_user$project$Main$DB_RequestFail,
+		_user$project$Main$DB_MedicToDoSucceed,
 		A3(
 			_user$project$Main$post$,
 			_elm_lang$core$Json_Decode$list(_user$project$Main$patientDecoder),
@@ -10487,8 +10511,8 @@ var _user$project$Main$patientByPIDCmd = function (pid) {
 					]))));
 	return A3(
 		_elm_lang$core$Task$perform,
-		_user$project$Main$RequestFail,
-		_user$project$Main$PatientMePageSucceed,
+		_user$project$Main$DB_RequestFail,
+		_user$project$Main$DB_PatientByPidSucceed,
 		A3(
 			_user$project$Main$post$,
 			_user$project$Main$patientDecoder,
@@ -10516,8 +10540,8 @@ var _user$project$Main$patientExhibitsCmd = function (pid) {
 					]))));
 	return A3(
 		_elm_lang$core$Task$perform,
-		_user$project$Main$RequestFail,
-		_user$project$Main$SymptomSucceed,
+		_user$project$Main$DB_RequestFail,
+		_user$project$Main$DB_SymptomSucceed,
 		A3(
 			_user$project$Main$post$,
 			_elm_lang$core$Json_Decode$list(_user$project$Main$symptomDecoder),
@@ -10545,8 +10569,8 @@ var _user$project$Main$patientHasCmd = function (pid) {
 					]))));
 	return A3(
 		_elm_lang$core$Task$perform,
-		_user$project$Main$RequestFail,
-		_user$project$Main$DiseaseTableSucceed,
+		_user$project$Main$DB_RequestFail,
+		_user$project$Main$DB_DiseaseTableSucceed,
 		A3(
 			_user$project$Main$post$,
 			_elm_lang$core$Json_Decode$list(_user$project$Main$diseaseDecoder),
@@ -10574,48 +10598,49 @@ var _user$project$Main$patientMedicCmd = function (pid) {
 					]))));
 	return A3(
 		_elm_lang$core$Task$perform,
-		_user$project$Main$RequestFail,
-		_user$project$Main$MedicTableSucceed,
+		_user$project$Main$DB_RequestFail,
+		_user$project$Main$DB_MedicTableSucceed,
 		A3(
 			_user$project$Main$post$,
 			_elm_lang$core$Json_Decode$list(_user$project$Main$medicDecoder),
 			A2(_elm_lang$core$Basics_ops['++'], _user$project$Main$baseUrl, '/patient-medic'),
 			body));
 };
-var _user$project$Main$mePage = function (model) {
-	var _p24 = model.loginStatus;
-	switch (_p24.ctor) {
+var _user$project$Main$loadMyPageInfoCmd = function (model) {
+	var _p27 = model.loginStatus;
+	switch (_p27.ctor) {
 		case 'Public':
 			return _elm_lang$core$Platform_Cmd$none;
 		case 'PatientLoggedIn':
-			var _p25 = _p24._0;
+			var _p29 = _p27._0;
+			var _p28 = A2(_elm_lang$core$Debug$log, '***Going to batch: patient ByPid; exhibitsCmd, HasCmd, MedicCmd', 0);
 			return _elm_lang$core$Platform_Cmd$batch(
 				_elm_lang$core$Native_List.fromArray(
 					[
-						_user$project$Main$patientByPIDCmd(_p25),
-						_user$project$Main$patientExhibitsCmd(_p25),
-						_user$project$Main$patientHasCmd(_p25),
-						_user$project$Main$patientMedicCmd(_p25)
+						_user$project$Main$patientByPIDCmd(_p29),
+						_user$project$Main$patientExhibitsCmd(_p29),
+						_user$project$Main$patientHasCmd(_p29),
+						_user$project$Main$patientMedicCmd(_p29)
 					]));
 		default:
-			var _p26 = _p24._0;
+			var _p30 = _p27._0;
 			return _elm_lang$core$Platform_Cmd$batch(
 				_elm_lang$core$Native_List.fromArray(
 					[
-						_user$project$Main$medicByMIDCmd(_p26),
-						_user$project$Main$medicContactedCmd(_p26),
-						_user$project$Main$medicsToDoCmd(_p26)
+						_user$project$Main$medicByMIDCmd(_p30),
+						_user$project$Main$medicChecksOnCmd(_p30),
+						_user$project$Main$medicsToDoCmd(_p30)
 					]));
 	}
 };
-var _user$project$Main$HospitalTableSucceed = function (a) {
-	return {ctor: 'HospitalTableSucceed', _0: a};
+var _user$project$Main$DB_HospitalTableSucceed = function (a) {
+	return {ctor: 'DB_HospitalTableSucceed', _0: a};
 };
 var _user$project$Main$hospitalLoadCmd = A3(
-	_user$project$Main$loadTable,
+	_user$project$Main$loadTableHelper,
 	_user$project$Main$hospitalTable,
 	_elm_lang$core$Json_Decode$list(_user$project$Main$hospitalDecoder),
-	_user$project$Main$HospitalTableSucceed);
+	_user$project$Main$DB_HospitalTableSucceed);
 var _user$project$Main$init = {ctor: '_Tuple2', _0: _user$project$Main$initModel, _1: _user$project$Main$hospitalLoadCmd};
 var _user$project$Main$queryHospitalFieldsCmd = function (model) {
 	return A4(
@@ -10623,7 +10648,7 @@ var _user$project$Main$queryHospitalFieldsCmd = function (model) {
 		_user$project$Main$hospitalTable,
 		model.fields,
 		_elm_lang$core$Json_Decode$list(_user$project$Main$hospitalDecoder),
-		_user$project$Main$HospitalTableSucceed);
+		_user$project$Main$DB_HospitalTableSucceed);
 };
 var _user$project$Main$update = F2(
 	function (msg, model) {
@@ -10645,101 +10670,121 @@ var _user$project$Main$update = F2(
 				locatableList);
 		};
 		var result = function () {
-			var _p27 = msg;
-			switch (_p27.ctor) {
-				case 'HospitalTableSucceed':
+			var _p31 = msg;
+			switch (_p31.ctor) {
+				case 'DB_HospitalTableSucceed':
+					var _p32 = _p31._0;
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{
-								hospitals: {list: _p27._0, sel: _elm_lang$core$Maybe$Nothing},
-								fields: _user$project$Main$tableFields(_user$project$Main$hospitalTable)
-							}),
-						_1: _elm_lang$core$Platform_Cmd$none
-					};
-				case 'PatientTableSucceed':
-					return {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
-							{
-								patients: {list: _p27._0, sel: _elm_lang$core$Maybe$Nothing},
-								fields: _user$project$Main$tableFields(_user$project$Main$patientTable)
-							}),
-						_1: _elm_lang$core$Platform_Cmd$none
-					};
-				case 'OtherPatientTableSucceed':
-					var _p28 = _p27._0;
-					return {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
-							{
-								otherPatients: _p28,
-								fields: _user$project$Main$tableFields(_user$project$Main$patientTable)
+								hospitals: {list: _p32, sel: _elm_lang$core$Maybe$Nothing},
+								fields: _user$project$Main$tableFields(_user$project$Main$hospitalTable),
+								mapCaption: 'Map of Hospitals'
 							}),
 						_1: _user$project$Main$showMarkers(
-							mapLocations(_p28))
+							mapLocations(_p32))
 					};
-				case 'DiseaseTableSucceed':
+				case 'DB_PatientTableSucceed':
+					var _p33 = _p31._0;
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{
-								diseases: {list: _p27._0, sel: _elm_lang$core$Maybe$Nothing},
+								patients: {list: _p33, sel: _elm_lang$core$Maybe$Nothing},
+								fields: _user$project$Main$tableFields(_user$project$Main$patientTable),
+								mapCaption: 'Map of Patients'
+							}),
+						_1: _user$project$Main$showMarkers(
+							mapLocations(_p33))
+					};
+				case 'DB_OtherPatientTableSucceed':
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{
+								otherPatients: _p31._0,
+								fields: _user$project$Main$tableFields(_user$project$Main$patientTable)
+							}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				case 'DB_MedicChecksOnSucceed':
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{medicChecksOn: _p31._0}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				case 'DB_MedicToDoSucceed':
+					var _p34 = _p31._0;
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{
+								medicToDo: _p34,
+								locationsForMap: mapLocations(_p34),
+								mapCaption: 'Map of Your ToDo List'
+							}),
+						_1: _user$project$Main$showMarkers(
+							mapLocations(_p34))
+					};
+				case 'DB_DiseaseTableSucceed':
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{
+								diseases: {list: _p31._0, sel: _elm_lang$core$Maybe$Nothing},
 								fields: _user$project$Main$tableFields(_user$project$Main$diseaseTable)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
-				case 'MedicTableSucceed':
+				case 'DB_MedicTableSucceed':
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{
-								medics: _p27._0,
+								medics: _p31._0,
 								fields: _user$project$Main$tableFields(_user$project$Main$medicTable)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
-				case 'SymptomSucceed':
+				case 'DB_SymptomSucceed':
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{symptoms: _p27._0}),
+							{symptoms: _p31._0}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
-				case 'MedicMePageSucceed':
-					return {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
-							{
-								mePage: _user$project$Main$MePageMedic(_p27._0)
-							}),
-						_1: _elm_lang$core$Platform_Cmd$none
-					};
-				case 'PatientMePageSucceed':
-					return {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
-							{
-								mePage: _user$project$Main$MePagePatient(_p27._0)
-							}),
-						_1: _elm_lang$core$Platform_Cmd$none
-					};
-				case 'RequestFail':
+				case 'DB_MedicByMidSucceed':
+					var model$ = _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							mePage: _user$project$Main$MePageMedic(_p31._0)
+						});
+					return {ctor: '_Tuple2', _0: model$, _1: _elm_lang$core$Platform_Cmd$none};
+				case 'DB_PatientByPidSucceed':
+					var model$ = _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							mePage: _user$project$Main$MePagePatient(_p31._0)
+						});
+					return {ctor: '_Tuple2', _0: model$, _1: _elm_lang$core$Platform_Cmd$none};
+				case 'DB_RequestFail':
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-				case 'MenuAct':
-					var _p30 = _p27._0._0;
+				case 'UI_MenuAct':
+					var _p36 = _p31._0._0;
 					var newMode = _user$project$Menu$update(
-						_user$project$Menu$Select(_p30));
-					var _p29 = _p30;
-					switch (_p29.ctor) {
+						_user$project$Menu$Select(_p36));
+					var _p35 = _p36;
+					switch (_p35.ctor) {
 						case 'HospitalPage':
 							return {
 								ctor: '_Tuple2',
@@ -10765,39 +10810,40 @@ var _user$project$Main$update = F2(
 								_1: _user$project$Main$diseaseLoadCmd
 							};
 						default:
+							var model$ = _elm_lang$core$Native_Utils.update(
+								model,
+								{mode: newMode});
 							return {
 								ctor: '_Tuple2',
-								_0: _elm_lang$core$Native_Utils.update(
-									model,
-									{mode: newMode}),
-								_1: _user$project$Main$mePage(model)
+								_0: model$,
+								_1: _user$project$Main$loadMyPageInfoCmd(model)
 							};
 					}
-				case 'UpdateLogin':
+				case 'UI_UpdateLogin':
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{
-								loginNumberModel: A2(_abadi199$elm_input_extra$Input_Number$update, _p27._0, model.loginNumberModel)
+								loginNumberModel: A2(_abadi199$elm_input_extra$Input_Number$update, _p31._0, model.loginNumberModel)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
-				case 'PIDLoginAttempt':
+				case 'UI_PIDLoginAttempt':
 					return {
 						ctor: '_Tuple2',
 						_0: model,
 						_1: _user$project$Main$validatePidCmd(model.loginNumberModel.value)
 					};
-				case 'MIDLoginAttempt':
+				case 'UI_MIDLoginAttempt':
 					return {
 						ctor: '_Tuple2',
 						_0: model,
 						_1: _user$project$Main$validateMidCmd(model.loginNumberModel.value)
 					};
-				case 'PIDLoginSuccess':
-					var _p31 = _p27._0;
-					if (_p31 === true) {
+				case 'DB_PIDLoginSuccess':
+					var _p37 = _p31._1;
+					if (_p37 === true) {
 						return {
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
@@ -10807,16 +10853,16 @@ var _user$project$Main$update = F2(
 										A2(
 											_elm_lang$core$Result$withDefault,
 											0,
-											_elm_lang$core$String$toInt(model.loginNumberModel.value)))
+											_elm_lang$core$String$toInt(_p31._0)))
 								}),
 							_1: _elm_lang$core$Platform_Cmd$none
 						};
 					} else {
 						return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 					}
-				case 'MIDLoginSuccess':
-					var _p32 = _p27._0;
-					if (_p32 === true) {
+				case 'DB_MIDLoginSuccess':
+					var _p38 = _p31._1;
+					if (_p38 === true) {
 						return {
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
@@ -10826,26 +10872,26 @@ var _user$project$Main$update = F2(
 										A2(
 											_elm_lang$core$Result$withDefault,
 											0,
-											_elm_lang$core$String$toInt(model.loginNumberModel.value)))
+											_elm_lang$core$String$toInt(_p31._0)))
 								}),
 							_1: _elm_lang$core$Platform_Cmd$none
 						};
 					} else {
 						return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 					}
-				case 'UpdateFieldInput':
+				case 'UI_UpdateFieldInput':
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{
-								fields: A3(_user$project$Main$updateField, _p27._0, _p27._1, model.fields)
+								fields: A3(_user$project$Main$updateField, _p31._0, _p31._1, model.fields)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
-				case 'FieldSearch':
-					var _p33 = model.mode;
-					switch (_p33.ctor) {
+				case 'UI_DoFieldSearch':
+					var _p39 = model.mode;
+					switch (_p39.ctor) {
 						case 'HospitalPage':
 							return {
 								ctor: '_Tuple2',
@@ -10867,15 +10913,15 @@ var _user$project$Main$update = F2(
 						default:
 							return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 					}
-				case 'NoJoin':
+				case 'UI_RowSelected_Ignore':
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-				case 'DiseaseByHospital':
-					var _p34 = _p27._1;
+				case 'UI_RowSelected_Hospital':
+					var _p40 = _p31._1;
 					var hospitals = model.hospitals;
 					var hospWithSelection = _elm_lang$core$Native_Utils.update(
 						hospitals,
 						{
-							sel: _elm_lang$core$Maybe$Just(_p34)
+							sel: _elm_lang$core$Maybe$Just(_p40)
 						});
 					return {
 						ctor: '_Tuple2',
@@ -10883,15 +10929,15 @@ var _user$project$Main$update = F2(
 							model,
 							{hospitals: hospWithSelection}),
 						_1: _user$project$Main$diseaseByHospitalCmd(
-							A3(_user$project$Main$primaryKey, model, _p27._0, _p34))
+							A3(_user$project$Main$primaryKey, model, _p31._0, _p40))
 					};
-				case 'SymptomByDisease':
-					var _p35 = _p27._1;
+				case 'UI_RowSelected_Disease':
+					var _p41 = _p31._1;
 					var diseases = model.diseases;
 					var diseasesWithSelection = _elm_lang$core$Native_Utils.update(
 						diseases,
 						{
-							sel: _elm_lang$core$Maybe$Just(_p35)
+							sel: _elm_lang$core$Maybe$Just(_p41)
 						});
 					return {
 						ctor: '_Tuple2',
@@ -10899,30 +10945,41 @@ var _user$project$Main$update = F2(
 							model,
 							{diseases: diseasesWithSelection}),
 						_1: _user$project$Main$sympByDiseaseCmd(
-							A3(_user$project$Main$primaryKey, model, _p27._0, _p35))
+							A3(_user$project$Main$primaryKey, model, _p31._0, _p41))
 					};
 				default:
-					var _p36 = _p27._1;
+					var _p42 = _p31._1;
 					var patients = model.patients;
 					var patientsWithSelection = _elm_lang$core$Native_Utils.update(
 						patients,
 						{
-							sel: _elm_lang$core$Maybe$Just(_p36)
+							sel: _elm_lang$core$Maybe$Just(_p42)
 						});
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{patients: patientsWithSelection, otherPatientsExplanation: 'Contacts Exposed to Current Patient'}),
+							{patients: patientsWithSelection}),
 						_1: _user$project$Main$patientByContactedSourceCmd(
-							A3(_user$project$Main$primaryKey, model, _p27._0, _p36))
+							A3(_user$project$Main$primaryKey, model, _p31._0, _p42))
 					};
 			}
 		}();
-		var _p37 = A2(
-			_elm_lang$core$Debug$log,
-			'**** Msg, Mode, Login',
-			{ctor: '_Tuple3', _0: msg, _1: model.mode, _2: model.loginStatus});
+		var _p43 = {
+			ctor: '_Tuple2',
+			_0: A2(
+				_elm_lang$core$Debug$log,
+				'**** Msg, Mode, Login -> Mode, Login\n\t',
+				{ctor: '_Tuple3', _0: msg, _1: model.mode, _2: model.loginStatus}),
+			_1: A2(
+				_elm_lang$core$Debug$log,
+				'\t\t-->',
+				{
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Basics$fst(result).mode,
+					_1: _elm_lang$core$Basics$fst(result).loginStatus
+				})
+		};
 		return result;
 	});
 var _user$project$Main$main = {
@@ -10931,7 +10988,7 @@ var _user$project$Main$main = {
 			init: _user$project$Main$init,
 			view: _user$project$Main$view,
 			update: _user$project$Main$update,
-			subscriptions: function (_p38) {
+			subscriptions: function (_p44) {
 				return _elm_lang$core$Platform_Sub$none;
 			}
 		})
