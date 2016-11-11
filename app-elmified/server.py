@@ -4,6 +4,7 @@ from flask import request, session
 from cloud_connect import w4111_engine
 from flask import g
 from flask_cors import CORS, cross_origin
+from typing import List, Dict, Union, Tuple
 
 import sys
 
@@ -58,6 +59,86 @@ def index():
 
 
 # Queries
+
+# ########### THIS GENERIC QUERY WITH TEST CASES IS SHOWN AS ILLUSTRATION
+# ########### It was implemented after the other more specific ones were done
+
+def strip_all(s):
+    # Remove ALL white-space so it is easier to test & compare strings
+    return "".join(s.split())
+
+def query(myKey: str,                                   # key in my row in table 1
+          joinTable: str,                               # name of join table
+          joinFk1: str,                                 # key from join table back to my table
+          joinFk2: str,                                 # key from join table out to table2
+          table2: str,                                  # name of table2
+          table2Pk: str,                                # name of primary key in table 2
+          selCols: List[Union[str, Tuple[str, str]]]    # list of cols to select, optionally qualified tName.col
+          ) -> str:                                     # returns SQL query string
+
+    def colStr(spec):
+        return (spec[0] + "." + spec[1]) if isinstance(spec, tuple) else (table2 + "." + spec)
+
+    selectedCols = []
+    for colSpec in selCols:
+        selectedCols.append(colStr(colSpec))
+
+    selectedCols = ", ".join(selectedCols)
+
+    query_str = """
+        SELECT %s
+        FROM %s LEFT OUTER JOIN %s
+        ON %s.%s = %s.%s
+        WHERE %s.%s = '%s'
+    """ % (selectedCols, table2, joinTable, table2, table2Pk, joinTable, joinFk2, joinTable, joinFk1, myKey)
+
+    return query_str
+
+# ######### TEST cases
+
+def test_query_unqualified():
+    symptoms_by_disease = strip_all(
+        query(
+            myKey="Tuberculosis",
+            joinTable="produces",
+            joinFk1="virus_name",
+            joinFk2="symptom_name",
+            table2="symptom",
+            table2Pk="symptom_name",
+            selCols=["symptom_name", "description"]))
+    expected = strip_all("""
+        SELECT symptom.symptom_name, symptom.description
+        FROM symptom LEFT OUTER JOIN produces
+        ON symptom.symptom_name=produces.symptom_name
+        WHERE produces.virus_name='Tuberculosis'
+    """)
+    assert symptoms_by_disease == expected
+
+
+def test_query_qualified():
+    symptoms_by_disease = strip_all(
+        query(
+            myKey="Tuberculosis",
+            joinTable="produces",
+            joinFk1="virus_name",
+            joinFk2="symptom_name",
+            table2="symptom",
+            table2Pk="symptom_name",
+            selCols=["symptom_name", "description", ("produces", "virus_name")]))
+    expected = strip_all("""
+        SELECT symptom.symptom_name, symptom.description, produces.virus_name
+        FROM symptom LEFT OUTER JOIN produces
+        ON symptom.symptom_name=produces.symptom_name
+        WHERE produces.virus_name='Tuberculosis'
+    """)
+    assert symptoms_by_disease == expected
+
+test_query_qualified()
+test_query_unqualified()
+
+# ########### END OF GENERIC QUERY WITH TEST CASES Illustration
+
+
 
 def row_to_dict(row, cols):
     kmap = { k: pos for (k, (x, y, pos)) in row._keymap.items() }
