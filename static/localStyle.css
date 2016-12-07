@@ -1,0 +1,57 @@
+
+body {
+	margin: 20px;
+}
+
+#layout {
+    padding-left: 160px;
+    left: 0;
+}
+
+google-map {
+    height: 400px;
+    margin: 10px;
+}
+
+
+.pure-button {
+	margin-left: 20px;
+}
+
+.pure-table {
+	margin-top: 20px;
+}
+
+#menu {
+    width: 160px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1000;
+    background: #191818;
+    color: lightgrey;
+    font-family: sans-serif;
+    /*margin-left: 10px;*/
+}
+
+.pure-menu-item {
+    font-size: 1.0em;
+    margin-top: 20px;
+    margin-left: 10px;
+    cursor: pointer;
+}
+
+.pure-menu-selected {
+    background-color: darkcyan;
+    padding: 3px;
+    margin-right: -4px;
+}
+
+tr:hover {
+    outline: lightblue auto 5px;
+}
+
+tr.pure-table-odd {
+    outline: blue auto 5px;
+}
