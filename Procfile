@@ -1,1 +1,1 @@
-web: gunicorn ebohub_app:app
+web: gunicorn server:app
