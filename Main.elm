@@ -1,26 +1,23 @@
 port module Main exposing (..)
 
 import Html exposing (button, text, div, Html, table, tr, td, node, h2, p, label, input, span, thead, th, tbody, caption)
-import Html.Attributes exposing (style, href, rel, type', class, id, for, src, attribute)
-import Html.Events exposing (onClick, onInput)
-import Html.App exposing (program)
-import Http
 import Json.Decode exposing (string, float, int)
 import Json.Decode as Decode
-import Json.Decode.Pipeline exposing (decode, required, optional, hardcoded)
 import Json.Encode as Encode
-import Input.Number as Number
 import String
+import Http
 import Result
 import Menu
-import Array
 import Debug
-import Task exposing (perform)
+import Tuple
+import Model exposing (..)
+import View exposing (..)
+import Conversion exposing (..)
 
 
-main : Program Never
+main : Program Never Model Msg
 main =
-    Html.App.program
+    Html.program
         { init = init
         , view = view
         , update = update
@@ -31,65 +28,6 @@ main =
 port showMarkers : List Location -> Cmd oneway
 
 
-
--- MODEL
-
-
-type alias Location =
-    { lat : Float, lng : Float }
-
-
-type alias SelList a =
-    { list : List a, sel : Maybe Int }
-
-
-type alias Model =
-    { hospitals : SelList Hospital
-    , diseases : SelList Disease
-    , patients : SelList Patient
-    , otherPatients : List Patient
-    , medicChecksOn : List Patient
-    , medicToDo : List Patient
-    , locationsForMap : List Location
-    , mapCaption : String
-    , symptoms : List Symptom
-    , medics : List Medic
-    , mode : Mode
-    , loginStatus : Status
-    , mePage : MePage
-    , loginNumberModel : Number.Model
-    , loginNumberOptions : Number.Options
-    , fields : List Field
-    }
-
-
-initModel : Model
-initModel =
-    { hospitals = { list = [], sel = Nothing }
-    , diseases = { list = [], sel = Nothing }
-    , patients = { list = [], sel = Nothing }
-    , otherPatients = []
-    , medicChecksOn = []
-    , medicToDo = []
-    , locationsForMap = []
-    , mapCaption = ""
-    , symptoms = []
-    , medics = []
-    , mode = HospitalPage
-    , loginStatus = Public
-    , mePage = NoMePage
-    , loginNumberModel = (Number.init)
-    , loginNumberOptions =
-        ({ id = "NumberInput"
-         , maxLength = Just 7
-         , maxValue = Nothing
-         , minValue = Nothing
-         }
-        )
-    , fields = tableFields hospitalTable
-    }
-
-
 init : ( Model, Cmd Msg )
 init =
     ( initModel
@@ -97,201 +35,19 @@ init =
     )
 
 
-type Mode
-    = HospitalPage
-    | DiseasePage
-      -- (TODO) contact tracing
-    | PatientPage
-    | MyInfoPage
-
-
-type Status
-    = Public
-    | PatientLoggedIn Int
-    | MedicLoggedIn Int
-
-
-type MePage
-    = MePageMedic Medic
-    | MePagePatient Patient
-    | NoMePage
-
-
-type alias Field =
-    { name : String
-    , val : String
-    }
-
-
-tableFields : Table a -> List Field
-tableFields tbl =
-    tbl.columns
-        |> List.map (\( name, getter ) -> Field name "")
-
-
-menu : List ( String, Mode )
-menu =
-    [ ( "Hospitals", HospitalPage )
-    , ( "Diseases", DiseasePage )
-    , ( "Patients", PatientPage )
-    , ( "Me", MyInfoPage )
-    ]
-
-
-type alias Table a =
-    -- Table Name + Column Definitions (postgres column name + Elm getter-function)
-    -- Can support generic view, filter, and back-end GET / POST calls
-    -- e.g. see viewTable, which makes html for any table
-    -- One of these can be made part of model for each tab
-    -- Can add SelectableRows to select 0-or-1 row for join-based queries
-    { name : String, columns : List ( String, a -> String ) }
-
-
-hospitalTable : Table Hospital
-hospitalTable =
-    { name = "hospital"
-    , columns =
-        [ ( "hospital_name", .hospitalName )
-        , ( "number_of_beds", .numberOfBeds )
-        , ( "latitude", .latitude )
-        , ( "longitude", .longitude )
-        ]
-    }
-
-
-patientTable : Table Patient
-patientTable =
-    { name = "patient"
-    , columns =
-        [ ( "pid", .pid )
-        , ( "forename", .forename )
-        , ( "surname", .surname )
-        , ( "status", .status )
-        , ( "phone_number", .phoneNumber )
-        , ( "dob", .dob )
-        , ( "latitude", .latitude )
-          -- TODO: add search type info to correctly search non-strings
-        , ( "longitude", .longitude )
-        ]
-    }
-
-
-diseaseTable : Table Disease
-diseaseTable =
-    { name = "disease"
-    , columns =
-        [ ( "virus_name", .virus_name )
-        , ( "incubation", .incubation )
-        , ( "duration", .duration )
-        ]
-    }
-
-
-symptomTable : Table Symptom
-symptomTable =
-    { name = "symptom"
-    , columns =
-        [ ( "symptom_name", .symptom_name )
-        , ( "description", .description )
-        ]
-    }
-
-
-medicTable : Table Medic
-medicTable =
-    { name = "medic"
-    , columns =
-        [ ( "mid", .mid )
-        , ( "name", .name )
-        , ( "hospital_name", .hospitalName )
-        , ( "phone_number", .phoneNumber )
-        , ( "latitude", .latitude )
-        , ( "longitude", .longitude )
-        ]
-    }
-
-
-
--- MAIN PROBLEM-DOMAIN OBJECT TYPES
-
-
-type alias Hospital =
-    { hospitalName : String
-    , numberOfBeds : String
-    , latitude : String
-    , longitude : String
-    }
-
-
-type alias Patient =
-    { pid : String
-    , forename : String
-    , surname : String
-    , status : String
-    , phoneNumber : String
-    , dob : String
-    , latitude : String
-    , longitude : String
-    }
-
-
-type alias Disease =
-    { virus_name : String
-    , incubation : String
-    , duration : String
-    }
-
-
-type alias Symptom =
-    { symptom_name : String
-    , description : String
-    }
-
-
-type alias Medic =
-    { mid : String
-    , name : String
-    , phoneNumber : String
-    , hospitalName : String
-    , latitude : String
-    , longitude : String
-    }
-
-
-type Msg
-    = DB_HospitalTableSucceed (List Hospital)
-    | DB_RequestFail Http.Error
-    | UI_MenuAct (Menu.Msg Mode)
-    | UI_UpdateLogin Number.Msg
-    | UI_PIDLoginAttempt
-    | UI_MIDLoginAttempt
-    | DB_PIDLoginSuccess String Bool
-    | DB_MIDLoginSuccess String Bool
-    | DB_PatientTableSucceed (List Patient)
-    | DB_OtherPatientTableSucceed (List Patient)
-    | DB_MedicToDoSucceed (List Patient)
-    | DB_MedicChecksOnSucceed (List Patient)
-      -- ----------
-    | DB_DiseaseTableSucceed (List Disease)
-      -- ----------
-    | DB_SymptomSucceed (List Symptom)
-    | DB_MedicTableSucceed (List Medic)
-    | DB_MedicByMidSucceed Medic
-    | DB_PatientByPidSucceed Patient
-    | UI_UpdateFieldInput String String
-    | UI_DoFieldSearch
-    | UI_RowSelected_Ignore String Int
-    | UI_RowSelected_Hospital String Int
-    | UI_RowSelected_Disease String Int
-    | UI_RowSelected_Patient String Int
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
+        errorNoOp err =
+            let
+                _ =
+                    Debug.log (toString err)
+            in
+                ( model, Cmd.none )
+
         _ =
             ( Debug.log "**** Msg, Mode, Login -> Mode, Login\n\t" ( msg, model.mode, model.loginStatus )
-            , Debug.log "\t\t-->" ( (fst result).mode, (fst result).loginStatus )
+            , Debug.log "\t\t-->" ( (Tuple.first result).mode, (Tuple.first result).loginStatus )
             )
 
         float s =
@@ -361,20 +117,20 @@ update msg model =
 
                 DB_MedicByMidSucceed medicInfo ->
                     let
-                        model' =
+                        model_ =
                             { model | mePage = MePageMedic medicInfo }
                     in
-                        ( model', Cmd.none )
+                        ( model_, Cmd.none )
 
                 DB_PatientByPidSucceed patientInfo ->
                     let
-                        model' =
+                        model_ =
                             { model | mePage = MePagePatient patientInfo }
                     in
-                        ( model', Cmd.none )
+                        ( model_, Cmd.none )
 
                 DB_RequestFail err ->
-                    ( model, Cmd.none )
+                    errorNoOp err
 
                 UI_MenuAct (Menu.Select mode) ->
                     let
@@ -393,25 +149,25 @@ update msg model =
 
                             MyInfoPage ->
                                 let
-                                    model' =
+                                    model_ =
                                         { model | mode = newMode }
                                 in
-                                    ( model', loadMyPageInfoCmd model )
+                                    ( model_, loadMyPageInfoCmd model )
 
-                UI_UpdateLogin numberMsg ->
+                UI_UpdateLogin val ->
                     ( { model
-                        | loginNumberModel = Number.update numberMsg model.loginNumberModel
+                        | loginNumberModel = val
                       }
                     , Cmd.none
                     )
 
                 UI_PIDLoginAttempt ->
-                    ( model, validatePidCmd model.loginNumberModel.value )
+                    ( model, validatePidCmd (model.loginNumberModel |> Maybe.withDefault 0 |> toString) )
 
                 UI_MIDLoginAttempt ->
-                    ( model, validateMidCmd model.loginNumberModel.value )
+                    ( model, validateMidCmd (model.loginNumberModel |> Maybe.withDefault 0 |> toString) )
 
-                DB_PIDLoginSuccess pid success ->
+                DB_PIDLoginResult pid success ->
                     case success of
                         True ->
                             ( { model
@@ -427,7 +183,7 @@ update msg model =
                         False ->
                             ( model, Cmd.none )
 
-                DB_MIDLoginSuccess mid success ->
+                DB_MIDLoginResult mid success ->
                     case success of
                         True ->
                             ( { model
@@ -518,58 +274,39 @@ updateField field val oldFields =
 
 baseUrl : String
 baseUrl =
-    "http://localhost:7777"
+    "http://kad2185.ngrok.io"
 
 
 
 -- "http://kad2185.ngrok.io"
--- POST REQUESTS
 {-
-   Functionality
+      post_ : Decode.Decoder a -> String -> Http.Body -> Task.Task Http.Error a
+      post_ dec url body =
+          let
+              _ =
+                  Debug.log ">>> Ready to POST" ( url, body )
+          in
+              HttpBuilder.send Http.defaultSettings
+                  { verb = "POST"
+                  , headers = [ ( "Content-type", "application/json" ) ]
+                  , url = url
+                  , body = body
+                  }
+                  |> Http.fromJson dec
 
-     1) Login by mid or pid.
-
-     2) View full tables: Hospital, Disease, Patient (restricted)
-
-     3) Search each table by specified field values.
-
-     4) Join-searches:
-         - Hospital -> diseases a hospital offers treatment for,
-                       medics located at a hospital
-         - Patient -> patients that exhibit or have a disease
-         - Disease -> symptoms produced by a disease
-
-     5) Me-page (Patient)
-         - patient data (updates)
-         - has and exhibits, if any
-         - hospitals admitted to, if any
-         - medic checked on by
-         - list of who they've contacted (can be empty) (insert/delete)
-
-     6) Me-page (Medic)
-         - medic data (updates)
-         - todo list of five closest patients
-         - patients checked on
+   loadTableHelper : Table a -> Decode.Decoder b -> (b -> Msg) -> Cmd Msg
+   loadTableHelper tbl dec successMsg =
+       let
+           body =
+               [ ( "table_name", Encode.string tbl.name ), ( "columns", encodeCols tbl.columns ) ]
+                   |> Encode.object
+                   |> Encode.encode 1
+                   |> Http.string
+       in
+           (post_ dec (baseUrl ++ "/get-table") body)
+               |> Task.perform DB_RequestFail successMsg
 
 -}
-
-
-post' : Decode.Decoder a -> String -> Http.Body -> Task.Task Http.Error a
-post' dec url body =
-    let
-        _ =
-            Debug.log ">>> Ready to POST" ( url, body )
-    in
-        Http.send Http.defaultSettings
-            { verb = "POST"
-            , headers = [ ( "Content-type", "application/json" ) ]
-            , url = url
-            , body = body
-            }
-            |> Http.fromJson dec
-
-
-
 -- Full table queries
 
 
@@ -580,51 +317,74 @@ encodeCols columns =
         |> Encode.list
 
 
-loadTableHelper : Table a -> Decode.Decoder b -> (b -> Msg) -> Cmd Msg
-loadTableHelper tbl dec successMsg =
+tblRequestBody : Table a -> Http.Body
+tblRequestBody tbl =
     let
-        body =
-            [ ( "table_name", Encode.string tbl.name ), ( "columns", encodeCols tbl.columns ) ]
-                |> Encode.object
-                |> Encode.encode 1
-                |> Http.string
+        cols : Encode.Value
+        cols =
+            tbl.columns
+                |> List.map (\( name, getter ) -> Encode.string name)
+                |> Encode.list
     in
-        (post' dec (baseUrl ++ "/get-table") body)
-            |> Task.perform DB_RequestFail successMsg
+        [ ( "table_name", Encode.string tbl.name ), ( "columns", cols ) ]
+            |> Encode.object
+            |> Http.jsonBody
 
 
 hospitalLoadCmd : Cmd Msg
 hospitalLoadCmd =
-    loadTableHelper hospitalTable (Decode.list hospitalDecoder) DB_HospitalTableSucceed
+    postWithTwoHandlers "/get-table" (tblRequestBody hospitalTable) (Decode.list hospitalDecoder) DB_HospitalTableSucceed DB_RequestFail
+
+
+
+-- loadTableHelper hospitalTable (Decode.list hospitalDecoder) DB_HospitalTableSucceed
 
 
 patientLoadCmd : Cmd Msg
 patientLoadCmd =
-    loadTableHelper patientTable (Decode.list patientDecoder) DB_PatientTableSucceed
+    Debug.crash "boom"
+
+
+
+-- loadTableHelper patientTable (Decode.list patientDecoder) DB_PatientTableSucceed
 
 
 diseaseLoadCmd : Cmd Msg
 diseaseLoadCmd =
-    loadTableHelper diseaseTable (Decode.list diseaseDecoder) DB_DiseaseTableSucceed
+    Debug.crash "boom"
 
 
 
+-- loadTableHelper diseaseTable (Decode.list diseaseDecoder) DB_DiseaseTableSucceed
 -- Login
 
 
 validatePidCmd : String -> Cmd Msg
 validatePidCmd pid =
-    (post' Decode.bool (baseUrl ++ "/pid-login/" ++ pid) Http.empty)
-        |> Task.perform DB_RequestFail (DB_PIDLoginSuccess pid)
+    postWithTwoHandlers ("/pid-login" ++ pid)
+        Http.emptyBody
+        Decode.bool
+        (DB_PIDLoginResult pid)
+        DB_RequestFail
+
+
+
+-- (post_ Decode.bool (baseUrl ++ "/pid-login/" ++ pid) Http.empty)
+--     |> Task.perform DB_RequestFail (DB_PIDLoginResult pid)
 
 
 validateMidCmd : String -> Cmd Msg
 validateMidCmd mid =
-    (post' Decode.bool (baseUrl ++ "/mid-login/" ++ mid) Http.empty)
-        |> Task.perform DB_RequestFail (DB_MIDLoginSuccess mid)
+    postWithTwoHandlers ("/mid-login" ++ mid)
+        Http.emptyBody
+        Decode.bool
+        (DB_MIDLoginResult mid)
+        DB_RequestFail
 
 
 
+-- (post_ Decode.bool (baseUrl ++ "/mid-login/" ++ mid) Http.empty)
+--     |> Task.perform DB_RequestFail (DB_MIDLoginResult mid)
 -- Field-specific queries
 
 
@@ -645,11 +405,9 @@ queryFieldsCmd tbl fields dec successMsg =
             , ( "fields", encodeFields fields )
             ]
                 |> Encode.object
-                |> Encode.encode 1
-                |> Http.string
+                |> Http.jsonBody
     in
-        (post' dec (baseUrl ++ "/query-fields") body)
-            |> Task.perform DB_RequestFail successMsg
+        postWithTwoHandlers "/query-fields" body dec successMsg DB_RequestFail
 
 
 queryHospitalFieldsCmd : Model -> Cmd Msg
@@ -669,13 +427,6 @@ queryDiseaseFieldsCmd model =
 
 
 -- Join queries
-
-
-getNth : List a -> Int -> Maybe a
-getNth items i =
-    items
-        |> Array.fromList
-        |> Array.get i
 
 
 primaryKey : Model -> String -> Int -> String
@@ -720,17 +471,29 @@ primaryKey model tblName ind =
         Debug.crash "Could not find table key"
 
 
+postWithTwoHandlers : String -> Http.Body -> Decode.Decoder a -> (a -> Msg) -> (Http.Error -> Msg) -> Cmd Msg
+postWithTwoHandlers url body decoder succMsg failMsg =
+    let
+        handler result =
+            case result of
+                Ok v ->
+                    succMsg v
+
+                Err e ->
+                    failMsg e
+    in
+        Http.post (baseUrl ++ url) body decoder |> Http.send handler
+
+
 sympByDiseaseCmd : String -> Cmd Msg
 sympByDiseaseCmd virusName =
     let
         body =
             [ ( "virus_name", Encode.string virusName ) ]
                 |> Encode.object
-                |> Encode.encode 1
-                |> Http.string
+                |> Http.jsonBody
     in
-        (post' (Decode.list symptomDecoder) (baseUrl ++ "/symptom-by-disease") body)
-            |> Task.perform DB_RequestFail DB_SymptomSucceed
+        postWithTwoHandlers "/symptom-by-disease" body (Decode.list symptomDecoder) DB_SymptomSucceed DB_RequestFail
 
 
 diseaseByHospitalCmd : String -> Cmd Msg
@@ -741,11 +504,9 @@ diseaseByHospitalCmd hospName =
             , ( "columns", encodeCols diseaseTable.columns )
             ]
                 |> Encode.object
-                |> Encode.encode 1
-                |> Http.string
+                |> Http.jsonBody
     in
-        (post' (Decode.list diseaseDecoder) (baseUrl ++ "/disease-by-hospital") body)
-            |> Task.perform DB_RequestFail DB_DiseaseTableSucceed
+        postWithTwoHandlers "/disease-by-hospital" body (Decode.list diseaseDecoder) DB_DiseaseTableSucceed DB_RequestFail
 
 
 patientByContactedSourceCmd : String -> Cmd Msg
@@ -756,11 +517,9 @@ patientByContactedSourceCmd pid =
             , ( "columns", encodeCols patientTable.columns )
             ]
                 |> Encode.object
-                |> Encode.encode 1
-                |> Http.string
+                |> Http.jsonBody
     in
-        (post' (Decode.list patientDecoder) (baseUrl ++ "/patient-by-contacted-source") body)
-            |> Task.perform DB_RequestFail DB_OtherPatientTableSucceed
+        postWithTwoHandlers "/patient-by-contacted-source" body (Decode.list patientDecoder) DB_OtherPatientTableSucceed DB_RequestFail
 
 
 
@@ -801,11 +560,9 @@ medicByMIDCmd mid =
         body =
             [ ( "mid", Encode.int mid ), ( "columns", encodeCols medicTable.columns ) ]
                 |> Encode.object
-                |> Encode.encode 1
-                |> Http.string
+                |> Http.jsonBody
     in
-        (post' medicDecoder (baseUrl ++ "/medic-me") body)
-            |> Task.perform DB_RequestFail DB_MedicByMidSucceed
+        postWithTwoHandlers "/medic-me" body medicDecoder DB_MedicByMidSucceed DB_RequestFail
 
 
 medicChecksOnCmd : Int -> Cmd Msg
@@ -814,11 +571,9 @@ medicChecksOnCmd mid =
         body =
             [ ( "mid", Encode.int mid ), ( "columns", encodeCols patientTable.columns ) ]
                 |> Encode.object
-                |> Encode.encode 1
-                |> Http.string
+                |> Http.jsonBody
     in
-        (post' (Decode.list patientDecoder) (baseUrl ++ "/medic-checks-on") body)
-            |> Task.perform DB_RequestFail DB_MedicChecksOnSucceed
+        postWithTwoHandlers "/medic-checks-on" body (Decode.list patientDecoder) DB_MedicChecksOnSucceed DB_RequestFail
 
 
 medicsToDoCmd : Int -> Cmd Msg
@@ -827,11 +582,9 @@ medicsToDoCmd mid =
         body =
             [ ( "mid", Encode.int mid ), ( "columns", encodeCols patientTable.columns ) ]
                 |> Encode.object
-                |> Encode.encode 1
-                |> Http.string
+                |> Http.jsonBody
     in
-        (post' (Decode.list patientDecoder) (baseUrl ++ "/medic-todo") body)
-            |> Task.perform DB_RequestFail DB_MedicToDoSucceed
+        postWithTwoHandlers "/medic-todo" body (Decode.list patientDecoder) DB_MedicToDoSucceed DB_RequestFail
 
 
 patientByPIDCmd : Int -> Cmd Msg
@@ -841,11 +594,9 @@ patientByPIDCmd pid =
         body =
             [ ( "pid", Encode.int pid ), ( "columns", encodeCols patientTable.columns ) ]
                 |> Encode.object
-                |> Encode.encode 1
-                |> Http.string
+                |> Http.jsonBody
     in
-        (post' patientDecoder (baseUrl ++ "/patient-me") body)
-            |> Task.perform DB_RequestFail DB_PatientByPidSucceed
+        postWithTwoHandlers "/patient-me" body patientDecoder DB_PatientByPidSucceed DB_RequestFail
 
 
 patientExhibitsCmd : Int -> Cmd Msg
@@ -854,11 +605,9 @@ patientExhibitsCmd pid =
         body =
             [ ( "pid", Encode.int pid ), ( "columns", encodeCols symptomTable.columns ) ]
                 |> Encode.object
-                |> Encode.encode 1
-                |> Http.string
+                |> Http.jsonBody
     in
-        (post' (Decode.list symptomDecoder) (baseUrl ++ "/patient-exhibits") body)
-            |> Task.perform DB_RequestFail DB_SymptomSucceed
+        postWithTwoHandlers "/patient-exhibits" body (Decode.list symptomDecoder) DB_SymptomSucceed DB_RequestFail
 
 
 patientHasCmd : Int -> Cmd Msg
@@ -867,11 +616,9 @@ patientHasCmd pid =
         body =
             [ ( "pid", Encode.int pid ), ( "columns", encodeCols diseaseTable.columns ) ]
                 |> Encode.object
-                |> Encode.encode 1
-                |> Http.string
+                |> Http.jsonBody
     in
-        (post' (Decode.list diseaseDecoder) (baseUrl ++ "/patient-has") body)
-            |> Task.perform DB_RequestFail DB_DiseaseTableSucceed
+        postWithTwoHandlers "/patient-has" body (Decode.list diseaseDecoder) DB_DiseaseTableSucceed DB_RequestFail
 
 
 patientMedicCmd : Int -> Cmd Msg
@@ -880,357 +627,6 @@ patientMedicCmd pid =
         body =
             [ ( "pid", Encode.int pid ), ( "columns", encodeCols medicTable.columns ) ]
                 |> Encode.object
-                |> Encode.encode 1
-                |> Http.string
+                |> Http.jsonBody
     in
-        (post' (Decode.list medicDecoder) (baseUrl ++ "/patient-medic") body)
-            |> Task.perform DB_RequestFail DB_MedicTableSucceed
-
-
-
--- DECODERS
-
-
-hospitalDecoder : Decode.Decoder Hospital
-hospitalDecoder =
-    decode Hospital
-        |> required "hospital_name" string
-        |> required "number_of_beds" string
-        |> required "latitude" string
-        |> required "longitude" string
-
-
-patientDecoder : Decode.Decoder Patient
-patientDecoder =
-    decode Patient
-        |> required "pid" string
-        |> required "forename" string
-        |> required "surname" string
-        |> required "status" string
-        |> required "phone_number" string
-        |> required "dob" string
-        |> required "latitude" string
-        |> required "longitude" string
-
-
-diseaseDecoder : Decode.Decoder Disease
-diseaseDecoder =
-    decode Disease
-        |> required "virus_name" string
-        |> required "incubation" string
-        |> required "duration" string
-
-
-symptomDecoder : Decode.Decoder Symptom
-symptomDecoder =
-    decode Symptom
-        |> required "symptom_name" string
-        |> required "description" string
-
-
-medicDecoder : Decode.Decoder Medic
-medicDecoder =
-    decode Medic
-        |> required "mid" string
-        |> required "name" string
-        |> required "phone_number" string
-        |> required "hospital_name" string
-        |> required "latitude" string
-        |> required "longitude" string
-
-
-
--- VIEW
-{-
-   Three views' restrictions:
-
-     Public: Restricts Patient view to just status, latitude, and longitude.
-             Can join-search patients by disease.
-
-     Patient: Me page includes all of that patient's data plus their list of
-             contacts and their medic's data, excluding mid (optional).
-
-     Medic: Me page includes that medic's data plus todo list of five
-           closest patients. Can see all patient data.
--}
-
-
-view : Model -> Html Msg
-view model =
-    let
-        -- master-detail structure: Hospitals->Diseases, Diseases->Symptoms, Patients->Contacts
-        selectedQualfier selList nameGetter =
-            case selList.sel of
-                Nothing ->
-                    "(no selection above)"
-
-                Just idx ->
-                    case (getNth selList.list idx) of
-                        Nothing ->
-                            "!! Index Error !!"
-
-                        Just x ->
-                            " (" ++ (nameGetter x) ++ ")"
-    in
-        div []
-            [ pureCSS
-            , localcss
-            , div [ id "layout" ]
-                [ Html.App.map UI_MenuAct (Menu.view menu model.mode)
-                , loginView model
-                , case model.mode of
-                    HospitalPage ->
-                        div []
-                            [ model.hospitals.list |> viewTable "Hospitals" True hospitalTable model.hospitals.sel
-                            , model.diseases.list |> viewTable ("Diseases Treated" ++ selectedQualfier model.hospitals .hospitalName) False diseaseTable Nothing
-                            ]
-
-                    PatientPage ->
-                        div []
-                            [ model.patients.list |> viewTable "Patients" True patientTable model.patients.sel
-                            , model.otherPatients |> viewTable ("Contacts" ++ selectedQualfier model.patients .pid) False patientTable Nothing
-                            ]
-
-                    DiseasePage ->
-                        div []
-                            [ model.diseases.list |> viewTable "Diseases" True diseaseTable model.diseases.sel
-                            , model.symptoms |> viewTable ("Symptoms" ++ selectedQualfier model.diseases .virus_name) False symptomTable Nothing
-                            ]
-
-                    MyInfoPage ->
-                        viewMyInfo model
-                , h2 [] [ text model.mapCaption ]
-                ]
-            ]
-
-
-loginView : Model -> Html Msg
-loginView model =
-    let
-        loginMsg =
-            case model.loginStatus of
-                Public ->
-                    ""
-
-                PatientLoggedIn pid ->
-                    "Logged in as patient " ++ (toString pid)
-
-                MedicLoggedIn mid ->
-                    "Logged in as medic " ++ (toString mid)
-    in
-        Html.div []
-            [ Html.p []
-                [ Html.label [ for model.loginNumberOptions.id ] [ text "Login ID" ]
-                , Number.input model.loginNumberOptions
-                    [ style
-                        [ ( "border", "1px solid #ccc" )
-                        , ( "padding", ".5rem" )
-                        , ( "box-shadow", "inset 0 1px 1px rgba(0,0,0,.075);" )
-                        ]
-                    ]
-                    model.loginNumberModel
-                    |> Html.App.map UI_UpdateLogin
-                , text loginMsg
-                ]
-            , div [ onClick UI_PIDLoginAttempt, class "pure-button" ] [ text "As Patient" ]
-            , div [ onClick UI_MIDLoginAttempt, class "pure-button" ] [ text "As Medic" ]
-            ]
-
-
-viewTable : String -> Bool -> Table a -> Maybe Int -> List a -> Html Msg
-viewTable header searchable tbl selIdx objects =
-    let
-        rowMsg =
-            if tbl.name == "hospital" then
-                UI_RowSelected_Hospital
-            else if tbl.name == "patient" then
-                UI_RowSelected_Patient
-            else if tbl.name == "disease" then
-                UI_RowSelected_Disease
-            else
-                UI_RowSelected_Ignore
-
-        selectionIndex =
-            case selIdx of
-                Nothing ->
-                    -99
-
-                Just i ->
-                    i
-
-        rowAttrs i =
-            let
-                click =
-                    if searchable then
-                        [ onClick (rowMsg tbl.name i) ]
-                    else
-                        []
-
-                sel =
-                    if selectionIndex == i then
-                        [ class "pure-table-odd" ]
-                    else
-                        []
-
-                -- _ =
-                --     Debug.log "row Attrs: selIdx, i, click, sel" ( selIdx, i, click, sel )
-            in
-                click ++ sel
-    in
-        table [ class "pure-table" ]
-            [ caption []
-                [ h2 [] [ text header ]
-                , if searchable then
-                    div [ class "pure-button pure-button-active search-button", onClick UI_DoFieldSearch ] [ text "search" ]
-                  else
-                    span [] []
-                ]
-            , thead []
-                [ tr []
-                    (tbl.columns
-                        |> List.map
-                            (\( name, getter ) ->
-                                th []
-                                    [ text name
-                                    , if searchable then
-                                        input [ onInput (UI_UpdateFieldInput name) ] []
-                                      else
-                                        span [] []
-                                    ]
-                            )
-                    )
-                  -- TODO: clear fields after search
-                ]
-            , tbody []
-                (objects
-                    |> List.indexedMap
-                        (\ind obj ->
-                            tr
-                                (rowAttrs ind)
-                                (List.map
-                                    (\( colName, getter ) ->
-                                        td [] [ text (getter obj) ]
-                                    )
-                                    tbl.columns
-                                )
-                        )
-                )
-            ]
-
-
-viewMyInfo : Model -> Html Msg
-viewMyInfo model =
-    let
-        _ =
-            Debug.log "model.medicChecksOn length" (List.length model.medicChecksOn)
-
-        _ =
-            Debug.log "model.medicToDo length" (List.length model.medicToDo)
-    in
-        case model.mePage of
-            MePageMedic m ->
-                let
-                    tbl =
-                        medicTable
-                in
-                    div []
-                        [ table [ class "pure-table" ]
-                            [ caption []
-                                [ h2 [] [ text ("My Information: " ++ tbl.name) ]
-                                ]
-                            , thead []
-                                [ tr []
-                                    (tbl.columns
-                                        |> List.map
-                                            (\( name, getter ) ->
-                                                th []
-                                                    [ text name
-                                                    ]
-                                            )
-                                    )
-                                ]
-                            , tbody []
-                                ([ m ]
-                                    |> List.indexedMap
-                                        (\ind obj ->
-                                            tr []
-                                                (List.map
-                                                    (\( colName, getter ) ->
-                                                        td [] [ text (getter obj) ]
-                                                    )
-                                                    tbl.columns
-                                                )
-                                        )
-                                )
-                            ]
-                        , p []
-                            [ model.medicChecksOn |> viewTable "Your Patients" False patientTable Nothing
-                            ]
-                        , p []
-                            [ model.medicToDo |> viewTable "Today's todo list" False patientTable Nothing
-                            ]
-                        ]
-
-            MePagePatient p ->
-                let
-                    tbl =
-                        patientTable
-                in
-                    div []
-                        [ table [ class "pure-table" ]
-                            [ caption []
-                                [ h2 [] [ text ("My Information: " ++ tbl.name) ]
-                                ]
-                            , thead []
-                                [ tr []
-                                    (tbl.columns
-                                        |> List.map
-                                            (\( name, getter ) ->
-                                                th []
-                                                    [ text name
-                                                    ]
-                                            )
-                                    )
-                                ]
-                            , tbody []
-                                ([ p ]
-                                    |> List.indexedMap
-                                        (\ind obj ->
-                                            tr []
-                                                (List.map
-                                                    (\( colName, getter ) ->
-                                                        td [] [ text (getter obj) ]
-                                                    )
-                                                    tbl.columns
-                                                )
-                                        )
-                                )
-                            ]
-                        , Html.p []
-                            [ model.medics |> viewTable "Your Doctor" False medicTable Nothing
-                            ]
-                        , Html.p []
-                            [ model.symptoms |> viewTable "Your Symptoms" False symptomTable Nothing
-                            ]
-                        , Html.p []
-                            [ model.diseases.list |> viewTable "Your Disease Diagnosis" False diseaseTable Nothing
-                            ]
-                        ]
-
-            NoMePage ->
-                div [] [ text "Please login to view your information." ]
-
-
-pureCSS : Html a
-pureCSS =
-    node "link"
-        [ rel "stylesheet"
-        , type' "text/css"
-        , href "http://yui.yahooapis.com/pure/0.6.0/pure-min.css"
-        ]
-        []
-
-
-localcss : Html a
-localcss =
-    node "link" [ rel "stylesheet", type' "text/css", href "localStyle.css" ] []
+        postWithTwoHandlers "/patient-medic" body (Decode.list medicDecoder) DB_MedicTableSucceed DB_RequestFail
