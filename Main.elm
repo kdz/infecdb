@@ -274,7 +274,7 @@ updateField field val oldFields =
 
 baseUrl : String
 baseUrl =
-    "http://kad2185.ngrok.io"
+    "http://infecdb.7insights.com"
 
 
 
@@ -333,30 +333,29 @@ tblRequestBody tbl =
 
 hospitalLoadCmd : Cmd Msg
 hospitalLoadCmd =
-    postWithTwoHandlers "/get-table" (tblRequestBody hospitalTable) (Decode.list hospitalDecoder) DB_HospitalTableSucceed DB_RequestFail
-
-
-
--- loadTableHelper hospitalTable (Decode.list hospitalDecoder) DB_HospitalTableSucceed
+    postWithTwoHandlers "/get-table"
+        (tblRequestBody hospitalTable)
+        (Decode.list hospitalDecoder)
+        DB_HospitalTableSucceed
+        DB_RequestFail
 
 
 patientLoadCmd : Cmd Msg
 patientLoadCmd =
-    Debug.crash "boom"
-
-
-
--- loadTableHelper patientTable (Decode.list patientDecoder) DB_PatientTableSucceed
+    postWithTwoHandlers "/get-table"
+        (tblRequestBody patientTable)
+        (Decode.list patientDecoder)
+        DB_PatientTableSucceed
+        DB_RequestFail
 
 
 diseaseLoadCmd : Cmd Msg
 diseaseLoadCmd =
-    Debug.crash "boom"
-
-
-
--- loadTableHelper diseaseTable (Decode.list diseaseDecoder) DB_DiseaseTableSucceed
--- Login
+    postWithTwoHandlers "/get-table"
+        (tblRequestBody diseaseTable)
+        (Decode.list diseaseDecoder)
+        DB_DiseaseTableSucceed
+        DB_RequestFail
 
 
 validatePidCmd : String -> Cmd Msg

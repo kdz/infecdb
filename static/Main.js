@@ -10820,8 +10820,8 @@ var _user$project$Main$primaryKey = F3(
 					return _elm_lang$core$Native_Utils.crash(
 						'Main',
 						{
-							start: {line: 471, column: 9},
-							end: {line: 471, column: 20}
+							start: {line: 470, column: 9},
+							end: {line: 470, column: 20}
 						})('Could not find table key');
 				}
 			}
@@ -10852,18 +10852,6 @@ var _user$project$Main$encodeFields = function (fields) {
 				},
 				fields)));
 };
-var _user$project$Main$diseaseLoadCmd = _elm_lang$core$Native_Utils.crash(
-	'Main',
-	{
-		start: {line: 354, column: 5},
-		end: {line: 354, column: 16}
-	})('boom');
-var _user$project$Main$patientLoadCmd = _elm_lang$core$Native_Utils.crash(
-	'Main',
-	{
-		start: {line: 345, column: 5},
-		end: {line: 345, column: 16}
-	})('boom');
 var _user$project$Main$tblRequestBody = function (tbl) {
 	var cols = _elm_lang$core$Json_Encode$list(
 		A2(
@@ -10899,7 +10887,7 @@ var _user$project$Main$encodeCols = function (columns) {
 			},
 			columns));
 };
-var _user$project$Main$baseUrl = 'http://kad2185.ngrok.io';
+var _user$project$Main$baseUrl = 'http://infecdb.7insights.com';
 var _user$project$Main$postWithTwoHandlers = F5(
 	function (url, body, decoder, succMsg, failMsg) {
 		var handler = function (result) {
@@ -10925,6 +10913,20 @@ var _user$project$Main$hospitalLoadCmd = A5(
 	_user$project$Main$tblRequestBody(_user$project$Model$hospitalTable),
 	_elm_lang$core$Json_Decode$list(_user$project$Conversion$hospitalDecoder),
 	_user$project$Model$DB_HospitalTableSucceed,
+	_user$project$Model$DB_RequestFail);
+var _user$project$Main$patientLoadCmd = A5(
+	_user$project$Main$postWithTwoHandlers,
+	'/get-table',
+	_user$project$Main$tblRequestBody(_user$project$Model$patientTable),
+	_elm_lang$core$Json_Decode$list(_user$project$Conversion$patientDecoder),
+	_user$project$Model$DB_PatientTableSucceed,
+	_user$project$Model$DB_RequestFail);
+var _user$project$Main$diseaseLoadCmd = A5(
+	_user$project$Main$postWithTwoHandlers,
+	'/get-table',
+	_user$project$Main$tblRequestBody(_user$project$Model$diseaseTable),
+	_elm_lang$core$Json_Decode$list(_user$project$Conversion$diseaseDecoder),
+	_user$project$Model$DB_DiseaseTableSucceed,
 	_user$project$Model$DB_RequestFail);
 var _user$project$Main$validatePidCmd = function (pid) {
 	return A5(
